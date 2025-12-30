@@ -33,10 +33,10 @@
       letter-spacing: 0.5px;
     }
 
-    /* 결과 표시 (굵게 제거) */
+    /* 결과 */
     .result {
       font-size: 92px;
-      font-weight: 400; /* 굵기 제거 */
+      font-weight: 400;
       line-height: 1;
       letter-spacing: 1px;
       display: inline-block;
@@ -54,11 +54,9 @@
       animation: pop 460ms cubic-bezier(.2,.9,.2,1) both;
     }
 
-    /* 버튼 */
-    button {
-      margin-top: 52px;
+    /* 버튼 공통 */
+    .btn {
       width: 100%;
-      height: 88px;
       border: none;
       border-radius: 18px;
       background: #ffffff;
@@ -67,21 +65,127 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.06s ease, box-shadow 0.06s ease;
+      transition: transform 0.06s ease, box-shadow 0.06s ease, opacity 0.15s ease;
       -webkit-tap-highlight-color: transparent;
     }
 
-    button:active {
+    .btn:active {
       transform: translateY(5px);
       box-shadow: 0 2px 0 #148243;
     }
 
-    button svg {
+    /* 메인(생성) 버튼 */
+    #pickBtn {
+      margin-top: 52px;
+      height: 88px;
+    }
+
+    #pickBtn svg {
       width: 46px;
       height: 46px;
       stroke: #1f9d55;
       stroke-width: 2.2;
       fill: none;
+    }
+
+    /* View Map 버튼 */
+    #mapBtn {
+      margin-top: 14px;
+      height: 62px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f9d55;
+      letter-spacing: 0.2px;
+    }
+
+    #mapBtn svg {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      stroke: #1f9d55;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* 맵 모달 */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .overlay.show { display: flex; }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: 88vh;
+      background: #ffffff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      color: #111;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modalHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .modalTitle {
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .closeBtn {
+      border: none;
+      background: rgba(0,0,0,0.06);
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .closeBtn:active { transform: scale(0.98); }
+
+    .closeBtn svg {
+      width: 20px;
+      height: 20px;
+      stroke: #222;
+      stroke-width: 2.4;
+      fill: none;
+    }
+
+    .modalBody {
+      overflow: auto;
+      padding: 14px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mapImg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.08);
+      margin-bottom: 12px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(0,0,0,0.6);
+      margin: 0 0 10px;
+      text-align: left;
     }
   </style>
 </head>
@@ -90,17 +194,44 @@
   <div class="container">
     <h1>DXB Gate Picker</h1>
 
-    <!-- 결과가 위 -->
     <div class="result" id="result">—</div>
 
-    <!-- 버튼이 아래 -->
-    <button id="pickBtn" type="button" aria-label="Generate Gate">
-      <!-- 생성 / 리프레시 아이콘 -->
+    <button id="pickBtn" class="btn" type="button" aria-label="Generate Gate">
+      <!-- 생성/리프레시 아이콘 -->
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
         <polyline points="21 3 21 9 15 9"/>
       </svg>
     </button>
+
+    <!-- View Map 버튼 추가 -->
+    <button id="mapBtn" class="btn" type="button" aria-label="View Map">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/>
+        <path d="M9 4v14M15 6v14"/>
+      </svg>
+      View Map
+    </button>
+  </div>
+
+  <!-- 맵 표시용 모달 -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-label="Map">
+    <div class="modal">
+      <div class="modalHeader">
+        <p class="modalTitle">DXB Maps</p>
+        <button id="closeBtn" class="closeBtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modalBody">
+        <p class="hint">아래 이미지를 스크롤/확대해서 확인하실 수 있습니다.</p>
+        <!-- 같은 폴더에 h1.png, h2.png를 업로드해 두세요. (예: /h1.png, /h2.png) -->
+        <img class="mapImg" src="h1.png" alt="h1 map" />
+        <img class="mapImg" src="h2.png" alt="h2 map" />
+      </div>
+    </div>
   </div>
 
   <script>
@@ -137,14 +268,12 @@
 
     /* ---------- Haptic ---------- */
     const haptic = () => {
-      if (navigator.vibrate) {
-        navigator.vibrate([20, 12, 20]);
-      }
+      if (navigator.vibrate) navigator.vibrate([20, 12, 20]);
     };
 
     /* ---------- Animation ---------- */
     const resultEl = document.getElementById("result");
-    const btn = document.getElementById("pickBtn");
+    const pickBtn = document.getElementById("pickBtn");
 
     const playPop = () => {
       resultEl.classList.remove("pop");
@@ -152,12 +281,33 @@
       resultEl.classList.add("pop");
     };
 
-    btn.addEventListener("click", () => {
+    pickBtn.addEventListener("click", () => {
       haptic();
       const category = pickCategory();
       const gate = pickOne(pools[category]);
       resultEl.textContent = gate;
       playPop();
+    });
+
+    /* ---------- Map modal ---------- */
+    const overlay = document.getElementById("overlay");
+    const mapBtn = document.getElementById("mapBtn");
+    const closeBtn = document.getElementById("closeBtn");
+
+    const openModal = () => { overlay.classList.add("show"); };
+    const closeModal = () => { overlay.classList.remove("show"); };
+
+    mapBtn.addEventListener("click", () => openModal());
+    closeBtn.addEventListener("click", () => closeModal());
+
+    // 배경 클릭하면 닫기
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal();
+    });
+
+    // ESC로 닫기(데스크탑)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
     });
   </script>
 </body>
