@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>DXB Gate Picker</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #1f9d55;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px 40px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin: 0 0 40px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* 결과 표시 (굵게 제거) */
+    .result {
+      font-size: 92px;
+      font-weight: 400; /* 굵기 제거 */
+      line-height: 1;
+      letter-spacing: 1px;
+      display: inline-block;
+      text-shadow: 0 10px 28px rgba(0,0,0,0.25);
+    }
+
+    @keyframes pop {
+      0%   { transform: translateY(18px) scale(0.8); opacity: 0; }
+      55%  { transform: translateY(-10px) scale(1.25); opacity: 1; }
+      80%  { transform: translateY(4px) scale(0.96); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .pop {
+      animation: pop 460ms cubic-bezier(.2,.9,.2,1) both;
+    }
+
+    /* 버튼 */
+    button {
+      margin-top: 52px;
+      width: 100%;
+      height: 88px;
+      border: none;
+      border-radius: 18px;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 7px 0 #148243;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.06s ease, box-shadow 0.06s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 #148243;
+    }
+
+    button svg {
+      width: 46px;
+      height: 46px;
+      stroke: #1f9d55;
+      stroke-width: 2.2;
+      fill: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>DXB Gate Picker</h1>
+
+    <!-- 결과가 위 -->
+    <div class="result" id="result">—</div>
+
+    <!-- 버튼이 아래 -->
+    <button id="pickBtn" type="button" aria-label="Generate Gate">
+      <!-- 생성 / 리프레시 아이콘 -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+        <polyline points="21 3 21 9 15 9"/>
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    /* ---------- Gate pools ---------- */
+    const range = (prefix, start, end, exclude = new Set()) => {
+      const arr = [];
+      for (let i = start; i <= end; i++) {
+        const v = `${prefix}${i}`;
+        if (!exclude.has(v)) arr.push(v);
+      }
+      return arr;
+    };
+
+    const poolA = range("A", 1, 24, new Set(["A6", "A7", "A18", "A19"]));
+    const poolB = range("B", 6, 32, new Set(["B7", "B16"]));
+    const poolC = [
+      ...range("C", 1, 23, new Set(["C15"])),
+      ...range("C", 37, 46)
+    ];
+    const poolRemote = ["Remote"];
+
+    const pools = { A: poolA, B: poolB, C: poolC, Remote: poolRemote };
+
+    /* ---------- 확률 ---------- */
+    const pickCategory = () => {
+      const r = Math.random() * 100;
+      if (r < 30) return "A";
+      if (r < 60) return "B";
+      if (r < 90) return "C";
+      return "Remote";
+    };
+
+    const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    /* ---------- Haptic ---------- */
+    const haptic = () => {
+      if (navigator.vibrate) {
+        navigator.vibrate([20, 12, 20]);
+      }
+    };
+
+    /* ---------- Animation ---------- */
+    const resultEl = document.getElementById("result");
+    const btn = document.getElementById("pickBtn");
+
+    const playPop = () => {
+      resultEl.classList.remove("pop");
+      void resultEl.offsetWidth;
+      resultEl.classList.add("pop");
+    };
+
+    btn.addEventListener("click", () => {
+      haptic();
+      const category = pickCategory();
+      const gate = pickOne(pools[category]);
+      resultEl.textContent = gate;
+      playPop();
+    });
+  </script>
+</body>
+</html>
