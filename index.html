@@ -33,7 +33,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* 결과 */
     .result {
       font-size: 92px;
       font-weight: 400;
@@ -49,12 +48,8 @@
       80%  { transform: translateY(4px) scale(0.96); }
       100% { transform: translateY(0) scale(1); }
     }
+    .pop { animation: pop 460ms cubic-bezier(.2,.9,.2,1) both; }
 
-    .pop {
-      animation: pop 460ms cubic-bezier(.2,.9,.2,1) both;
-    }
-
-    /* 버튼 공통 */
     .btn {
       width: 100%;
       border: none;
@@ -74,21 +69,9 @@
       box-shadow: 0 2px 0 #148243;
     }
 
-    /* 메인(생성) 버튼 */
-    #pickBtn {
-      margin-top: 52px;
-      height: 88px;
-    }
+    #pickBtn { margin-top: 52px; height: 88px; }
+    #pickBtn svg { width: 46px; height: 46px; stroke: #1f9d55; stroke-width: 2.2; fill: none; }
 
-    #pickBtn svg {
-      width: 46px;
-      height: 46px;
-      stroke: #1f9d55;
-      stroke-width: 2.2;
-      fill: none;
-    }
-
-    /* View Map 버튼 */
     #mapBtn {
       margin-top: 14px;
       height: 62px;
@@ -97,7 +80,6 @@
       color: #1f9d55;
       letter-spacing: 0.2px;
     }
-
     #mapBtn svg {
       width: 18px;
       height: 18px;
@@ -107,85 +89,115 @@
       fill: none;
     }
 
-    /* 맵 모달 */
-    .overlay {
+    /* ---------- Fullscreen viewer ---------- */
+    .viewer {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: #000;
       display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
       z-index: 999;
+      touch-action: pan-y; /* allow vertical scroll inside image if needed */
     }
-    .overlay.show { display: flex; }
+    .viewer.show { display: block; }
 
-    .modal {
-      width: min(920px, 100%);
-      max-height: 88vh;
-      background: #ffffff;
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-      color: #111;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modalHeader {
+    .viewerHeader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 14px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
+      gap: 12px;
+      z-index: 3;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0));
     }
 
-    .modalTitle {
-      font-size: 16px;
-      font-weight: 800;
-      margin: 0;
+    .badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      user-select: none;
     }
 
-    .closeBtn {
+    .closeX {
       border: none;
-      background: rgba(0,0,0,0.06);
-      border-radius: 12px;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      -webkit-tap-highlight-color: transparent;
     }
-    .closeBtn:active { transform: scale(0.98); }
+    .closeX:active { transform: scale(0.98); }
+    .closeX svg { width: 22px; height: 22px; stroke: #fff; stroke-width: 2.4; fill: none; opacity: 0.95; }
 
-    .closeBtn svg {
-      width: 20px;
-      height: 20px;
-      stroke: #222;
-      stroke-width: 2.4;
-      fill: none;
-    }
-
-    .modalBody {
-      overflow: auto;
-      padding: 14px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .mapImg {
+    /* Slides track */
+    .track {
+      height: 100%;
       width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.08);
-      margin-bottom: 12px;
+      display: flex;
+      transform: translateX(0);
+      transition: transform 240ms ease;
+      will-change: transform;
+      touch-action: pan-y; /* horizontal handled by JS */
     }
 
-    .hint {
-      font-size: 12px;
-      color: rgba(0,0,0,0.6);
-      margin: 0 0 10px;
-      text-align: left;
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 64px 10px 18px; /* header 공간 */
+      user-select: none;
+    }
+
+    /* Make image fit screen */
+    .slide img {
+      max-width: 100%;
+      max-height: calc(100vh - 90px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Dots */
+    .dots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.35);
+    }
+    .dot.active { background: rgba(255,255,255,0.92); }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      .track { transition: none; }
+      .pop { animation: none; }
     }
   </style>
 </head>
@@ -197,14 +209,12 @@
     <div class="result" id="result">—</div>
 
     <button id="pickBtn" class="btn" type="button" aria-label="Generate Gate">
-      <!-- 생성/리프레시 아이콘 -->
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
         <polyline points="21 3 21 9 15 9"/>
       </svg>
     </button>
 
-    <!-- View Map 버튼 추가 -->
     <button id="mapBtn" class="btn" type="button" aria-label="View Map">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/>
@@ -214,23 +224,26 @@
     </button>
   </div>
 
-  <!-- 맵 표시용 모달 -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-label="Map">
-    <div class="modal">
-      <div class="modalHeader">
-        <p class="modalTitle">DXB Maps</p>
-        <button id="closeBtn" class="closeBtn" type="button" aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modalBody">
-        <p class="hint">아래 이미지를 스크롤/확대해서 확인하실 수 있습니다.</p>
-        <!-- 같은 폴더에 h1.png, h2.png를 업로드해 두세요. (예: /h1.png, /h2.png) -->
-        <img class="mapImg" src="h1.png" alt="h1 map" />
-        <img class="mapImg" src="h2.png" alt="h2 map" />
-      </div>
+  <!-- Fullscreen swipe viewer -->
+  <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Maps">
+    <div class="viewerHeader">
+      <div id="badge" class="badge">1 / 2</div>
+      <button id="closeViewer" class="closeX" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="track" class="track">
+      <!-- 같은 폴더(루트)에 h1.png, h2.png 업로드 -->
+      <div class="slide"><img src="h1.png" alt="h1 map" draggable="false" /></div>
+      <div class="slide"><img src="h2.png" alt="h2 map" draggable="false" /></div>
+    </div>
+
+    <div class="dots" aria-hidden="true">
+      <div class="dot" id="dot0"></div>
+      <div class="dot" id="dot1"></div>
     </div>
   </div>
 
@@ -267,11 +280,9 @@
     const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     /* ---------- Haptic ---------- */
-    const haptic = () => {
-      if (navigator.vibrate) navigator.vibrate([20, 12, 20]);
-    };
+    const haptic = () => { if (navigator.vibrate) navigator.vibrate([20, 12, 20]); };
 
-    /* ---------- Animation ---------- */
+    /* ---------- Pop animation ---------- */
     const resultEl = document.getElementById("result");
     const pickBtn = document.getElementById("pickBtn");
 
@@ -283,32 +294,151 @@
 
     pickBtn.addEventListener("click", () => {
       haptic();
-      const category = pickCategory();
-      const gate = pickOne(pools[category]);
+      const gate = pickOne(pools[pickCategory()]);
       resultEl.textContent = gate;
       playPop();
     });
 
-    /* ---------- Map modal ---------- */
-    const overlay = document.getElementById("overlay");
+    /* ---------- Fullscreen swipe viewer ---------- */
+    const viewer = document.getElementById("viewer");
     const mapBtn = document.getElementById("mapBtn");
-    const closeBtn = document.getElementById("closeBtn");
+    const closeViewer = document.getElementById("closeViewer");
+    const track = document.getElementById("track");
+    const badge = document.getElementById("badge");
+    const dots = [document.getElementById("dot0"), document.getElementById("dot1")];
 
-    const openModal = () => { overlay.classList.add("show"); };
-    const closeModal = () => { overlay.classList.remove("show"); };
+    const slideCount = 2;
+    let index = 0;
 
-    mapBtn.addEventListener("click", () => openModal());
-    closeBtn.addEventListener("click", () => closeModal());
+    const setIndex = (i, animate = true) => {
+      index = Math.max(0, Math.min(slideCount - 1, i));
+      track.style.transition = animate ? "transform 240ms ease" : "none";
+      track.style.transform = `translateX(${-index * 100}%)`;
+      badge.textContent = `${index + 1} / ${slideCount}`;
+      dots.forEach((d, idx) => d.classList.toggle("active", idx === index));
+    };
 
-    // 배경 클릭하면 닫기
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeModal();
+    const openViewer = () => {
+      viewer.classList.add("show");
+      document.body.style.overflow = "hidden";
+      setIndex(0, false);
+      // iOS에서 주소창 흔들림 방지용 재계산
+      setTimeout(() => setIndex(index, false), 0);
+    };
+
+    const close = () => {
+      viewer.classList.remove("show");
+      document.body.style.overflow = "";
+    };
+
+    mapBtn.addEventListener("click", openViewer);
+    closeViewer.addEventListener("click", close);
+
+    // Tap on background (not on image) closes
+    viewer.addEventListener("click", (e) => {
+      if (e.target === viewer) close();
     });
 
-    // ESC로 닫기(데스크탑)
+    // Keyboard (desktop)
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeModal();
+      if (!viewer.classList.contains("show")) return;
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowLeft") setIndex(index - 1);
+      if (e.key === "ArrowRight") setIndex(index + 1);
     });
+
+    // Swipe handling
+    let startX = 0;
+    let startY = 0;
+    let dx = 0;
+    let dragging = false;
+    let allowSwipe = false;
+
+    const onStart = (x, y) => {
+      startX = x; startY = y;
+      dx = 0;
+      dragging = true;
+      allowSwipe = false;
+      track.style.transition = "none";
+    };
+
+    const onMove = (x, y) => {
+      if (!dragging) return;
+      dx = x - startX;
+      const dy = y - startY;
+
+      // Decide if horizontal swipe (avoid blocking vertical scroll)
+      if (!allowSwipe) {
+        if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+          allowSwipe = true;
+        } else if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+          // vertical intent -> stop swiping
+          dragging = false;
+          track.style.transition = "transform 240ms ease";
+          return;
+        }
+      }
+
+      if (!allowSwipe) return;
+
+      // Translate in px based on viewport width
+      const vw = window.innerWidth || 375;
+      const base = -index * vw;
+      track.style.transform = `translateX(${base + dx}px)`;
+    };
+
+    const onEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+
+      if (!allowSwipe) {
+        setIndex(index); // snap back
+        return;
+      }
+
+      const threshold = Math.min(90, (window.innerWidth || 375) * 0.22);
+
+      if (dx > threshold) setIndex(index - 1);
+      else if (dx < -threshold) setIndex(index + 1);
+      else setIndex(index);
+    };
+
+    // Touch events
+    track.addEventListener("touchstart", (e) => {
+      if (!viewer.classList.contains("show")) return;
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: true });
+
+    track.addEventListener("touchmove", (e) => {
+      if (!viewer.classList.contains("show")) return;
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    track.addEventListener("touchend", () => {
+      if (!viewer.classList.contains("show")) return;
+      onEnd();
+    }, { passive: true });
+
+    // Mouse drag (desktop)
+    track.addEventListener("mousedown", (e) => {
+      if (!viewer.classList.contains("show")) return;
+      onStart(e.clientX, e.clientY);
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!viewer.classList.contains("show")) return;
+      onMove(e.clientX, e.clientY);
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (!viewer.classList.contains("show")) return;
+      onEnd();
+    });
+
+    // Init dots state
+    setIndex(0, false);
   </script>
 </body>
 </html>
