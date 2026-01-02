@@ -342,6 +342,76 @@
     .totalLeft{ font-weight:900; letter-spacing:0.2px; }
     .totalRight{ text-align:right; white-space:nowrap; }
 
+    .seatmapHeader{
+      margin-top:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .seatmapBtn{
+      height:32px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.16);
+      background:#ffffff;
+      color:#111;
+      font-size:12px;
+      font-weight:800;
+      padding:0 10px;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .seatmapBtn:active{ transform: scale(0.98); }
+    .seatmapMeta{
+      margin:6px 0 10px;
+      font-size:12px;
+      color:#444;
+    }
+    .seatmapWrap{
+      width:100%;
+      background: #f7f7f7;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 14px;
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .seatmapRow{
+      width:100%;
+      display:grid;
+      grid-template-columns: repeat(var(--row-cols), minmax(0, 1fr));
+      column-gap: var(--row-gap-x, 4px);
+      row-gap: var(--row-gap-y, 4px);
+      padding: 0 var(--row-pad-x, 0px);
+      align-items:stretch;
+    }
+    .seatmapRow.gapRow{ height:14px; }
+    .seatCell{
+      width:100%;
+      aspect-ratio:1 / 1;
+      border-radius:4px;
+      position:relative;
+      overflow:visible;
+    }
+    .seatCell.space{ background:transparent; }
+    .seatCell.seat::before{
+      content:"";
+      position:absolute;
+      inset: var(--seat-inset, 0px);
+      border-radius:4px;
+      background: var(--seat-color);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+      transform: scale(var(--seat-scale, 1));
+      transform-origin:center;
+    }
+    .seatCell.occupied::before{ background:#9ca3af; }
+    .seatCell[data-class="F"]{ --seat-color:#8b0000; --seat-scale:1; --seat-inset:4px; }
+    .seatCell[data-class="C"]{ --seat-color:#0b2a6f; --seat-scale:1.08; }
+    .seatCell[data-class="W"]{ --seat-color:#6b21a8; --seat-scale:1.0; }
+    .seatCell[data-class="Y"]{ --seat-color:#0f7a2a; }
+
     @media (prefers-reduced-motion: reduce){
       .track{ transition:none; }
       .pop{ animation:none; }
@@ -436,6 +506,14 @@
           <div class="totalLeft">Total</div>
           <div class="totalRight" id="totalText">—</div>
         </div>
+
+        <div class="seatmapHeader">
+          <div class="label">Seatmap</div>
+          <button id="seatmapLoadBtn" class="seatmapBtn" type="button" aria-label="Load Seatmap">Load Seatmap</button>
+        </div>
+        <div class="seatmapMeta" id="seatmapMeta">Seatmap not loaded</div>
+        <div class="seatmapWrap" id="seatmapWrap" aria-label="Seatmap"></div>
+        <input id="seatmapFile" type="file" accept=".xlsx" hidden />
       </div>
     </div>
   </div>
@@ -462,6 +540,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
     const addPressFeedback = (btn) => {
       const on = () => btn.classList.add('pressed');
@@ -613,6 +692,16 @@
     const loadRefreshBtn = document.getElementById('loadRefreshBtn');
     const homeBtn = document.getElementById('homeBtn');
     const totalText = document.getElementById('totalText');
+    const seatmapLoadBtn = document.getElementById('seatmapLoadBtn');
+    const seatmapFile = document.getElementById('seatmapFile');
+    const seatmapMeta = document.getElementById('seatmapMeta');
+    const seatmapWrap = document.getElementById('seatmapWrap');
+
+    let currentLoads = {};
+    let currentAircraftName = "";
+    let currentSeatmapKey = "";
+    let seatmapByKey = {};
+    let seatmapGroups = {};
 
     const aircraftData = [
       { name: "A350 Mid Range", classes: { C: 32, W: 21, Y: 259 } },
@@ -625,7 +714,7 @@
       { name: "B777-300ER Two Class", classes: { C: 35, Y: 386 } },
       { name: "B777-300ER Three Class", classes: { F: 8, C: 42, Y: [304, 310] } },
       { name: "B777-300ER Four Class", classes: { F: 8, C: 40, W: 24, Y: [256, 260] } },
-      { name: "B777-300ER Game Changer", classes: { F: 6, C: 38, W: 24, Y: 256 } }
+      { name: "B777-300ER Four Class Game Changer", classes: { F: 6, C: 38, W: 24, Y: 256 } }
     ];
 
     const classOrder = ["F","C","W","Y"];
@@ -697,13 +786,42 @@
       return Math.max(0.01, base - LIGHT_DELTA); // ✅ 20%p 낮춤
     };
 
+    const pickSeatmapVariant = (aircraft) => {
+      const variants = seatmapGroups[aircraft.name];
+      if (!variants || variants.length === 0) return null;
+      let targetY = null;
+      const yVal = aircraft.classes?.Y;
+      if (Array.isArray(yVal)) targetY = pickCap(yVal);
+      else if (typeof yVal === "number") targetY = yVal;
+      let variant = null;
+      if (targetY !== null) {
+        variant = variants.find((v) => v.yTagNumber === targetY)
+          || variants.find((v) => v.counts.Y === targetY);
+      }
+      if (!variant) {
+        variant = variants[Math.floor(Math.random() * variants.length)];
+      }
+      return { variant, targetY };
+    };
+
     const renderLoad = () => {
       const idx = aircraftSelect.selectedIndex;
       const aircraft = aircraftData[Math.max(0, idx)];
       if (!aircraft) return;
 
       const caps = {};
-      for (const k of Object.keys(aircraft.classes)) caps[k] = pickCap(aircraft.classes[k]);
+      const selection = pickSeatmapVariant(aircraft);
+      if (selection && selection.variant) {
+        const seatmap = selection.variant;
+        for (const k of Object.keys(seatmap.counts)) {
+          const cap = seatmap.counts[k];
+          if (cap > 0) caps[k] = cap;
+        }
+        currentSeatmapKey = seatmap.key;
+      } else {
+        for (const k of Object.keys(aircraft.classes)) caps[k] = pickCap(aircraft.classes[k]);
+        currentSeatmapKey = aircraft.name;
+      }
 
       const loads = {};
       for (const k of Object.keys(caps)) {
@@ -738,9 +856,509 @@
       const totalCap  = Object.keys(caps).reduce((s,k)=>s+caps[k], 0);
       const occ = totalCap > 0 ? (totalLoad / totalCap) : 0;
       totalText.textContent = `${totalLoad} / ${totalCap} (${fmtPct(occ * 100)})`;
+
+      currentLoads = loads;
+      currentAircraftName = aircraft.name;
+      renderSeatmap();
     };
 
-    const initAircraftSelect = () => {
+    const shuffle = (arr) => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    };
+
+    const formatCounts = (counts) => {
+      const order = ["F","C","W","Y"];
+      const parts = [];
+      for (const cls of order) {
+        if (counts[cls]) parts.push(`${cls}${counts[cls]}`);
+      }
+      return parts.join(" ");
+    };
+
+    const normalizeClass = (v) => {
+      if (!v) return "";
+      const t = String(v).trim().toUpperCase();
+      return ["F","C","W","Y"].includes(t) ? t : "";
+    };
+
+    const parseSeatmapSheet = (sheet) => {
+      if (!sheet || !sheet["!ref"]) return null;
+      const range = XLSX.utils.decode_range(sheet["!ref"]);
+      const counts = { F: 0, C: 0, W: 0, Y: 0 };
+      const width = range.e.c - range.s.c + 1;
+      const rowsRaw = [];
+      const classRanges = {
+        F: { start: Infinity, end: -Infinity },
+        C: { start: Infinity, end: -Infinity },
+        W: { start: Infinity, end: -Infinity }
+      };
+      const yBlocks = [];
+      let currentY = null;
+
+      for (let r = range.s.r; r <= range.e.r; r++) {
+        const rowCells = new Array(width).fill("");
+        let firstCol = -1;
+        let lastCol = -1;
+        let rowClass = "";
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const cell = sheet[XLSX.utils.encode_cell({ r, c })];
+          const cls = normalizeClass(cell ? cell.v : "");
+          const idx = c - range.s.c;
+          rowCells[idx] = cls;
+          if (cls) {
+            counts[cls] = (counts[cls] || 0) + 1;
+            if (rowClass === "") rowClass = cls;
+            if (firstCol === -1) firstCol = idx;
+            lastCol = idx;
+          }
+        }
+
+        const hasSeat = firstCol !== -1;
+        const row = {
+          cellsFull: rowCells,
+          firstCol,
+          lastCol,
+          className: rowClass,
+          hasSeat,
+          yBlock: -1
+        };
+        rowsRaw.push(row);
+
+        if (hasSeat && rowClass && classRanges[rowClass]) {
+          const rangeRef = classRanges[rowClass];
+          rangeRef.start = Math.min(rangeRef.start, firstCol);
+          rangeRef.end = Math.max(rangeRef.end, lastCol);
+        }
+
+        if (hasSeat && rowClass === "Y") {
+          if (!currentY || currentY.lastRow !== r - 1) {
+            currentY = { start: firstCol, end: lastCol, lastRow: r };
+            yBlocks.push(currentY);
+          } else {
+            currentY.start = Math.min(currentY.start, firstCol);
+            currentY.end = Math.max(currentY.end, lastCol);
+            currentY.lastRow = r;
+          }
+          row.yBlock = yBlocks.length - 1;
+        } else {
+          currentY = null;
+        }
+      }
+
+      const normalizedRows = rowsRaw.map((row) => {
+        if (!row.hasSeat || !row.className) return { cells: [], cols: 0, hasSeat: false };
+        let start = row.firstCol;
+        let end = row.lastCol;
+        if (row.className === "Y" && row.yBlock >= 0) {
+          const block = yBlocks[row.yBlock];
+          start = block.start;
+          end = block.end;
+        } else if (classRanges[row.className]) {
+          const rangeRef = classRanges[row.className];
+          if (rangeRef.end >= rangeRef.start) {
+            start = rangeRef.start;
+            end = rangeRef.end;
+          }
+        }
+        const sliced = row.cellsFull.slice(start, end + 1);
+        return { cells: sliced, cols: sliced.length, hasSeat: true, offset: start };
+      });
+
+      const maxCols = normalizedRows.reduce((m, row) => Math.max(m, row.cols), 0);
+      return { rows: normalizedRows, maxCols, counts, baseCol: range.s.c };
+    };
+
+    const parseSheetInfo = (sheetName) => {
+      const match = sheetName.match(/^(.*?)(?:\s*)?(Y\d+)$/i);
+      let baseRaw = sheetName.trim();
+      let yTag = "";
+      let yTagNumber = null;
+      if (match) {
+        baseRaw = match[1].trim();
+        yTag = match[2].toUpperCase();
+        const num = parseInt(yTag.replace("Y", ""), 10);
+        if (!Number.isNaN(num)) yTagNumber = num;
+      }
+      let baseName = baseRaw;
+      const matched = aircraftData.find((a) => a.name.toLowerCase().startsWith(baseRaw.toLowerCase()));
+      if (matched) baseName = matched.name;
+      const displayName = yTag ? `${baseName} (${yTag})` : baseName;
+      return { baseName, displayName, yTag, yTagNumber };
+    };
+
+    const ensureUniqueName = (name, used) => {
+      if (!used.has(name)) {
+        used.add(name);
+        return name;
+      }
+      let idx = 2;
+      let next = `${name} ${idx}`;
+      while (used.has(next)) {
+        idx += 1;
+        next = `${name} ${idx}`;
+      }
+      used.add(next);
+      return next;
+    };
+
+    const ensureAircraftBase = (baseName, seatmap) => {
+      if (aircraftData.some((a) => a.name === baseName)) return;
+      const classes = {};
+      for (const cls of Object.keys(seatmap.counts)) {
+        if (seatmap.counts[cls]) classes[cls] = seatmap.counts[cls];
+      }
+      aircraftData.push({ name: baseName, classes });
+    };
+
+    const parseSeatmapWorkbook = (wb) => {
+      seatmapByKey = {};
+      seatmapGroups = {};
+      for (let i = aircraftData.length - 1; i >= 0; i--) {
+        if (/\(Y\d+\)$/.test(aircraftData[i].name)) aircraftData.splice(i, 1);
+      }
+      const usedNames = new Set();
+      for (const sheetName of wb.SheetNames) {
+        const seatmap = parseSeatmapSheet(wb.Sheets[sheetName]);
+        if (!seatmap) continue;
+        const info = parseSheetInfo(sheetName);
+        if (info.yTagNumber && seatmap.counts.Y) {
+          seatmap.counts.Y = info.yTagNumber;
+        }
+        const displayName = ensureUniqueName(info.displayName, usedNames);
+        const key = displayName;
+        seatmapByKey[key] = seatmap;
+        if (!seatmapGroups[info.baseName]) seatmapGroups[info.baseName] = [];
+        seatmapGroups[info.baseName].push({
+          key,
+          displayName,
+          yTag: info.yTag,
+          yTagNumber: info.yTagNumber,
+          counts: seatmap.counts
+        });
+        ensureAircraftBase(info.baseName, seatmap);
+      }
+      for (const [baseName, variants] of Object.entries(seatmapGroups)) {
+        const yVals = Array.from(new Set(
+          variants
+            .map((v) => v.yTagNumber ?? v.counts.Y)
+            .filter((v) => Number.isFinite(v))
+        )).sort((a, b) => a - b);
+        if (yVals.length > 0) {
+          const idx = aircraftData.findIndex((a) => a.name === baseName);
+          if (idx >= 0) {
+            aircraftData[idx].classes = {
+              ...aircraftData[idx].classes,
+              Y: yVals.length > 1 ? yVals : yVals[0]
+            };
+          }
+        }
+      }
+      const count = Object.keys(seatmapByKey).length;
+      if (count === 0) {
+        seatmapMeta.textContent = "Seatmap not loaded";
+        renderSeatmap();
+        return;
+      }
+      seatmapMeta.textContent = `Loaded ${count} sheet(s)`;
+      initAircraftSelect(currentAircraftName || aircraftSelect.value);
+    };
+
+    const PREF_PROB = 0.8;
+    const BASE_GAP_X = 4;
+    const BASE_GAP_Y = 2;
+    const C_EF_SHARE = 0.5;
+    const ADJACENT_PAIR_SHARE = 0.2;
+    const B777_C_GAP_X = 10;
+    const B777_C_GAP_Y = 4;
+
+    const pickFromList = (list, used) => {
+      while (list.length) {
+        const seat = list.pop();
+        if (!used.has(seat.key)) return seat;
+      }
+      return null;
+    };
+
+    const buildRowOrder = (rowKeys) => {
+      if (rowKeys.length === 0) return [];
+      const midLeft = Math.floor((rowKeys.length - 1) / 2);
+      let left = midLeft;
+      let right = midLeft + 1;
+      const rowOrder = [];
+      let takeLeft = Math.random() < 0.5;
+      while (left >= 0 || right < rowKeys.length) {
+        if (takeLeft && left >= 0) rowOrder.push(rowKeys[left--]);
+        else if (!takeLeft && right < rowKeys.length) rowOrder.push(rowKeys[right++]);
+        else if (left >= 0) rowOrder.push(rowKeys[left--]);
+        else if (right < rowKeys.length) rowOrder.push(rowKeys[right++]);
+        takeLeft = !takeLeft;
+      }
+      return rowOrder;
+    };
+
+    const buildZigzagOrder = (seats) => {
+      const byRow = new Map();
+      for (const seat of seats) {
+        if (!byRow.has(seat.row)) byRow.set(seat.row, []);
+        byRow.get(seat.row).push(seat);
+      }
+      const rowKeys = Array.from(byRow.keys()).sort((a, b) => a - b);
+      const rowOrder = buildRowOrder(rowKeys);
+      const ordered = [];
+      rowOrder.forEach((rowKey, idx) => {
+        const rowSeats = byRow.get(rowKey);
+        rowSeats.sort((a, b) => a.col - b.col);
+        if (idx % 2 === 1) rowSeats.reverse();
+        ordered.push(...rowSeats);
+      });
+      ordered.reverse();
+      return ordered;
+    };
+
+    const buildSpreadOrder = (seats) => {
+      const byRow = new Map();
+      for (const seat of seats) {
+        if (!byRow.has(seat.row)) byRow.set(seat.row, []);
+        byRow.get(seat.row).push(seat);
+      }
+      const rowKeys = Array.from(byRow.keys()).sort((a, b) => a - b);
+      const rowOrder = buildRowOrder(rowKeys);
+      const ordered = [];
+      rowOrder.forEach((rowKey) => {
+        const rowSeats = byRow.get(rowKey);
+        rowSeats.sort((a, b) => a.col - b.col);
+        if (Math.random() < 0.5) rowSeats.reverse();
+        ordered.push(...rowSeats);
+      });
+      ordered.reverse();
+      return ordered;
+    };
+
+    const buildOccupancy = (seatmap, loads) => {
+      const seatsByClass = { F: [], C: [], W: [], Y: [] };
+      seatmap.rows.forEach((row, rIdx) => {
+        if (!row.hasSeat) return;
+        const rowCells = row.cells;
+        const seatCols = [];
+        for (let c = 0; c < rowCells.length; c++) {
+          if (rowCells[c]) seatCols.push(c);
+        }
+        if (!seatCols.length) return;
+        const firstSeat = seatCols[0];
+        const lastSeat = seatCols[seatCols.length - 1];
+        for (const c of seatCols) {
+          const cls = rowCells[c];
+          const colIndex = seatmap.baseCol + (row.offset || 0) + c + 1;
+          const isEF = cls === "C" && (colIndex === 5 || colIndex === 6);
+          const isCD = cls === "F" && (colIndex === 3 || colIndex === 4);
+          const hasSeatLeft = c > firstSeat;
+          const hasSeatRight = c < lastSeat;
+          const leftEmpty = c > 0 && !rowCells[c - 1];
+          const rightEmpty = c < rowCells.length - 1 && !rowCells[c + 1];
+          let type = "middle";
+          if (!hasSeatLeft || !hasSeatRight) type = "window";
+          else if ((leftEmpty && hasSeatLeft) || (rightEmpty && hasSeatRight)) type = "aisle";
+          seatsByClass[cls].push({ key: `${rIdx}:${c}`, type, row: rIdx, col: c, isEF, isCD });
+        }
+      });
+
+      const occupied = new Set();
+      for (const cls of Object.keys(seatsByClass)) {
+        const seats = seatsByClass[cls];
+        if (!seats.length) continue;
+        const grouped = { window: [], aisle: [], middle: [] };
+        for (const seat of seats) grouped[seat.type].push(seat);
+        let windowList = grouped.window.slice();
+        let aisleList = grouped.aisle.slice();
+        let middleList = grouped.middle.slice();
+        let all = seats.slice();
+        let efList = [];
+        if (cls === "C") {
+          const orderFn = buildZigzagOrder;
+          windowList = orderFn(windowList);
+          aisleList = orderFn(aisleList);
+          middleList = orderFn(middleList);
+          all = orderFn(all);
+          efList = orderFn(seats.filter((s) => s.isEF));
+        } else if (cls === "W") {
+          windowList = buildSpreadOrder(windowList);
+          aisleList = buildSpreadOrder(aisleList);
+          middleList = buildSpreadOrder(middleList);
+          all = buildSpreadOrder(all);
+        } else if (cls === "F") {
+          windowList = buildSpreadOrder(windowList);
+          aisleList = buildSpreadOrder(aisleList);
+          middleList = buildSpreadOrder(middleList);
+          all = buildSpreadOrder(all);
+        } else {
+          shuffle(windowList);
+          shuffle(aisleList);
+          shuffle(middleList);
+          shuffle(all);
+        }
+
+        let remaining = Math.min(loads[cls] || 0, seats.length);
+        const used = new Set();
+        const pairShare = cls === "F" ? 0.5 : (cls === "C" ? ADJACENT_PAIR_SHARE : 0);
+        if (pairShare > 0 && remaining > 1) {
+          const seatMap = new Map();
+          const rowCols = new Map();
+          for (const seat of seats) {
+            seatMap.set(seat.key, seat);
+            if (!rowCols.has(seat.row)) rowCols.set(seat.row, []);
+            rowCols.get(seat.row).push(seat.col);
+          }
+          const pairList = [];
+          for (const [rowKey, cols] of rowCols.entries()) {
+            const sorted = cols.sort((a, b) => a - b);
+            const eligible = [];
+            for (const col of sorted) {
+              const seat = seatMap.get(`${rowKey}:${col}`);
+              if (!seat) continue;
+              if (cls === "F" && !seat.isCD) continue;
+              eligible.push(col);
+            }
+            let idx = 0;
+            while (idx < eligible.length - 1) {
+              if (eligible[idx + 1] === eligible[idx] + 1) {
+                const a = seatMap.get(`${rowKey}:${eligible[idx]}`);
+                const b = seatMap.get(`${rowKey}:${eligible[idx + 1]}`);
+                if (a && b) pairList.push([a, b]);
+                idx += 2;
+              } else {
+                idx += 1;
+              }
+            }
+          }
+          const maxPairs = pairList.length;
+          let pairTarget = Math.min(Math.floor(remaining * pairShare / 2), maxPairs);
+          shuffle(pairList);
+          for (const [a, b] of pairList) {
+            if (remaining < 2 || pairTarget <= 0) break;
+            if (used.has(a.key) || used.has(b.key)) continue;
+            used.add(a.key);
+            used.add(b.key);
+            occupied.add(a.key);
+            occupied.add(b.key);
+            remaining -= 2;
+            pairTarget -= 1;
+          }
+        }
+
+        while (remaining > 0) {
+          let seat = null;
+          if (Math.random() < PREF_PROB) {
+            if (cls === "C") {
+              if (Math.random() < C_EF_SHARE) {
+                seat = pickFromList(efList, used)
+                  || pickFromList(windowList, used)
+                  || pickFromList(aisleList, used)
+                  || pickFromList(middleList, used);
+              } else {
+                seat = pickFromList(windowList, used)
+                  || pickFromList(efList, used)
+                  || pickFromList(aisleList, used)
+                  || pickFromList(middleList, used);
+              }
+            } else {
+              seat = pickFromList(windowList, used)
+                || pickFromList(aisleList, used)
+                || pickFromList(middleList, used);
+            }
+          }
+          if (!seat) seat = pickFromList(all, used);
+          if (!seat) break;
+          used.add(seat.key);
+          occupied.add(seat.key);
+          remaining -= 1;
+        }
+      }
+      return occupied;
+    };
+
+    const renderSeatmap = () => {
+      seatmapWrap.innerHTML = "";
+      const seatmapKey = currentSeatmapKey || currentAircraftName || aircraftSelect.value;
+      const seatmap = seatmapByKey[seatmapKey];
+      if (!seatmap) {
+        seatmapMeta.textContent = "Seatmap not loaded";
+        return;
+      }
+      const countText = formatCounts(seatmap.counts);
+      const label = seatmapKey || currentAircraftName || aircraftSelect.value;
+      seatmapMeta.textContent = countText ? `${label} - ${countText}` : label;
+
+      const baseName = currentAircraftName || aircraftSelect.value || "";
+      const occupied = buildOccupancy(seatmap, currentLoads);
+      const nameLower = baseName.toLowerCase();
+      const isB777 = nameLower.includes("b777");
+      const isB777FourClass = nameLower.includes("b777-300er four class");
+
+      seatmap.rows.forEach((row, rIdx) => {
+        if (!row.hasSeat) {
+          const gap = document.createElement("div");
+          gap.className = "seatmapRow gapRow";
+          gap.style.setProperty("--row-cols", seatmap.maxCols || 1);
+          gap.style.setProperty("--row-gap-x", `${BASE_GAP_X}px`);
+          gap.style.setProperty("--row-gap-y", `${BASE_GAP_Y}px`);
+          gap.style.setProperty("--row-pad-x", "0px");
+          seatmapWrap.appendChild(gap);
+          return;
+        }
+        const rowEl = document.createElement("div");
+        rowEl.className = "seatmapRow";
+        const rowClass = row.cells.find((c) => c) || "";
+        const isB777C = isB777 && rowClass === "C" && !isB777FourClass;
+        rowEl.style.setProperty("--row-cols", row.cols);
+        rowEl.style.setProperty("--row-gap-x", `${isB777C ? B777_C_GAP_X : BASE_GAP_X}px`);
+        rowEl.style.setProperty("--row-gap-y", `${isB777C ? B777_C_GAP_Y : BASE_GAP_Y}px`);
+        const padX = isB777C ? 10 : 0;
+        rowEl.style.setProperty("--row-pad-x", `${padX}px`);
+
+        for (let c = 0; c < row.cols; c++) {
+          const cls = row.cells[c];
+          const cell = document.createElement("div");
+          if (!cls) {
+            cell.className = "seatCell space";
+          } else {
+            cell.className = "seatCell seat";
+            cell.dataset.class = cls;
+            if (occupied.has(`${rIdx}:${c}`)) cell.classList.add("occupied");
+          }
+          rowEl.appendChild(cell);
+        }
+        seatmapWrap.appendChild(rowEl);
+      });
+    };
+
+    const loadSeatmapFile = async (file) => {
+      if (!file || !window.XLSX) {
+        seatmapMeta.textContent = "Seatmap loader unavailable";
+        return;
+      }
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: "array" });
+      parseSeatmapWorkbook(wb);
+    };
+
+    const tryAutoLoadSeatmap = async () => {
+      if (!window.XLSX) return;
+      if (Object.keys(seatmapByKey).length) return;
+      try {
+        const res = await fetch("seatmap.xlsx", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.arrayBuffer();
+        const wb = XLSX.read(data, { type: "array" });
+        parseSeatmapWorkbook(wb);
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const initAircraftSelect = (preferredName = "") => {
       aircraftSelect.innerHTML = "";
       for (const a of aircraftData) {
         const opt = document.createElement("option");
@@ -748,12 +1366,24 @@
         opt.textContent = a.name;
         aircraftSelect.appendChild(opt);
       }
-      aircraftSelect.selectedIndex = 0;
+      let idx = 0;
+      if (preferredName) {
+        const found = aircraftData.findIndex((a) => a.name === preferredName);
+        if (found >= 0) idx = found;
+      }
+      aircraftSelect.selectedIndex = idx;
       renderLoad();
     };
 
     addPressFeedback(loadRefreshBtn);
     addPressFeedback(homeBtn);
+
+    seatmapLoadBtn.addEventListener("click", () => seatmapFile.click());
+    seatmapFile.addEventListener("change", () => {
+      const file = seatmapFile.files[0];
+      if (file) loadSeatmapFile(file);
+      seatmapFile.value = "";
+    });
 
     aircraftSelect.addEventListener("change", renderLoad);
     lightLoadChk.addEventListener("change", renderLoad);  // ✅ 체크 변경 시 즉시 반영
@@ -764,7 +1394,10 @@
       showScreen('load');
       if (aircraftSelect.options.length === 0) initAircraftSelect();
       else renderLoad();
+      tryAutoLoadSeatmap();
     });
+
+    tryAutoLoadSeatmap();
   </script>
 </body>
 </html>
