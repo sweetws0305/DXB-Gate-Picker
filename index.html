@@ -509,7 +509,6 @@
 
         <div class="seatmapHeader">
           <div class="label">Seatmap</div>
-          <button id="seatmapLoadBtn" class="seatmapBtn" type="button" aria-label="Load Seatmap">Load Seatmap</button>
         </div>
         <div class="seatmapMeta" id="seatmapMeta">Seatmap not loaded</div>
         <div class="seatmapWrap" id="seatmapWrap" aria-label="Seatmap"></div>
@@ -692,7 +691,6 @@
     const loadRefreshBtn = document.getElementById('loadRefreshBtn');
     const homeBtn = document.getElementById('homeBtn');
     const totalText = document.getElementById('totalText');
-    const seatmapLoadBtn = document.getElementById('seatmapLoadBtn');
     const seatmapFile = document.getElementById('seatmapFile');
     const seatmapMeta = document.getElementById('seatmapMeta');
     const seatmapWrap = document.getElementById('seatmapWrap');
@@ -1070,6 +1068,9 @@
     const BASE_GAP_X = 4;
     const BASE_GAP_Y = 2;
     const C_EF_SHARE = 0.5;
+    const C121_LOW_LOAD = 0.45;
+    const C121_EF_SHARE = 0.3;
+    const C121_WINDOW_SHARE = 0.7;
     const ADJACENT_PAIR_SHARE = 0.2;
     const B777_C_GAP_X = 10;
     const B777_C_GAP_Y = 4;
@@ -1083,18 +1084,33 @@
     };
 
     const buildRowOrder = (rowKeys) => {
-      if (rowKeys.length === 0) return [];
-      const midLeft = Math.floor((rowKeys.length - 1) / 2);
-      let left = midLeft;
-      let right = midLeft + 1;
+      if (rowKeys.length <= 1) return rowKeys.slice();
+      const sorted = rowKeys.slice().sort((a, b) => a - b);
+      if (sorted.length <= 2) {
+        shuffle(sorted);
+        return sorted;
+      }
+      const bucketCount = Math.min(3, sorted.length);
+      const bucketSize = Math.ceil(sorted.length / bucketCount);
+      const buckets = [];
+      for (let i = 0; i < bucketCount; i++) {
+        const start = i * bucketSize;
+        const end = Math.min(sorted.length, start + bucketSize);
+        const bucket = sorted.slice(start, end);
+        shuffle(bucket);
+        buckets.push(bucket);
+      }
       const rowOrder = [];
-      let takeLeft = Math.random() < 0.5;
-      while (left >= 0 || right < rowKeys.length) {
-        if (takeLeft && left >= 0) rowOrder.push(rowKeys[left--]);
-        else if (!takeLeft && right < rowKeys.length) rowOrder.push(rowKeys[right++]);
-        else if (left >= 0) rowOrder.push(rowKeys[left--]);
-        else if (right < rowKeys.length) rowOrder.push(rowKeys[right++]);
-        takeLeft = !takeLeft;
+      while (rowOrder.length < sorted.length) {
+        const active = [];
+        for (let i = 0; i < buckets.length; i++) {
+          if (buckets[i].length) active.push(i);
+        }
+        shuffle(active);
+        for (const idx of active) {
+          const bucket = buckets[idx];
+          if (bucket.length) rowOrder.push(bucket.pop());
+        }
       }
       return rowOrder;
     };
@@ -1139,6 +1155,33 @@
 
     const buildOccupancy = (seatmap, loads) => {
       const seatsByClass = { F: [], C: [], W: [], Y: [] };
+      const cRowCounts = [];
+      seatmap.rows.forEach((row) => {
+        if (!row.hasSeat) return;
+        const rowClass = row.cells.find((c) => c) || "";
+        if (rowClass !== "C") return;
+        let count = 0;
+        for (const cell of row.cells) {
+          if (cell === "C") count += 1;
+        }
+        if (count) cRowCounts.push(count);
+      });
+      let isC121 = false;
+      if (cRowCounts.length) {
+        const freq = new Map();
+        for (const count of cRowCounts) {
+          freq.set(count, (freq.get(count) || 0) + 1);
+        }
+        let mode = null;
+        let modeCount = 0;
+        for (const [count, times] of freq.entries()) {
+          if (times > modeCount) {
+            modeCount = times;
+            mode = count;
+          }
+        }
+        isC121 = mode === 4;
+      }
       seatmap.rows.forEach((row, rIdx) => {
         if (!row.hasSeat) return;
         const rowCells = row.cells;
@@ -1201,6 +1244,11 @@
         }
 
         let remaining = Math.min(loads[cls] || 0, seats.length);
+        const classLoadRatio = seats.length ? (remaining / seats.length) : 0;
+        const preferWindow = cls === "C"
+          && isC121
+          && classLoadRatio > 0
+          && classLoadRatio < C121_LOW_LOAD;
         const used = new Set();
         const pairShare = cls === "F" ? 0.5 : (cls === "C" ? ADJACENT_PAIR_SHARE : 0);
         if (pairShare > 0 && remaining > 1) {
@@ -1250,9 +1298,15 @@
 
         while (remaining > 0) {
           let seat = null;
-          if (Math.random() < PREF_PROB) {
+          if (preferWindow && Math.random() < C121_WINDOW_SHARE) {
+            seat = pickFromList(windowList, used)
+              || pickFromList(efList, used)
+              || pickFromList(aisleList, used)
+              || pickFromList(middleList, used);
+          } else if (Math.random() < PREF_PROB) {
             if (cls === "C") {
-              if (Math.random() < C_EF_SHARE) {
+              const efShare = preferWindow ? C121_EF_SHARE : C_EF_SHARE;
+              if (Math.random() < efShare) {
                 seat = pickFromList(efList, used)
                   || pickFromList(windowList, used)
                   || pickFromList(aisleList, used)
@@ -1269,6 +1323,7 @@
                 || pickFromList(middleList, used);
             }
           }
+          if (!seat && preferWindow) seat = pickFromList(windowList, used);
           if (!seat) seat = pickFromList(all, used);
           if (!seat) break;
           used.add(seat.key);
@@ -1377,8 +1432,6 @@
 
     addPressFeedback(loadRefreshBtn);
     addPressFeedback(homeBtn);
-
-    seatmapLoadBtn.addEventListener("click", () => seatmapFile.click());
     seatmapFile.addEventListener("change", () => {
       const file = seatmapFile.files[0];
       if (file) loadSeatmapFile(file);
