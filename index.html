@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="ko">
 <head>
@@ -14,10 +15,7 @@
       display:flex; align-items:center; justify-content:center; color:#fff;
     }
 
-    .screen{
-      width:100%;
-      display:none;
-    }
+    .screen{ width:100%; display:none; }
     .screen.active{ display:block; }
 
     .container{ width:100%; max-width:420px; padding:32px 24px 40px; text-align:center; margin:0 auto; }
@@ -55,20 +53,11 @@
     #pickBtn{ margin-top:52px; height:88px; }
     #pickBtn svg{ width:46px; height:46px; stroke:#1f9d55; stroke-width:2.2; fill:none; }
 
-    #mapBtn{
-      margin-top:14px; height:62px; font-size:16px; font-weight:700;
-      color:#1f9d55; letter-spacing:.2px;
-    }
-    #mapBtn svg{
-      width:18px; height:18px; margin-right:10px; stroke:#1f9d55; stroke-width:2.2; fill:none;
-    }
-
-    /* Load button */
-    #loadBtn{
+    #mapBtn, #loadBtn{
       margin-top:14px; height:62px; font-size:16px; font-weight:800;
       color:#1f9d55; letter-spacing:.2px;
     }
-    #loadBtn svg{
+    #mapBtn svg, #loadBtn svg{
       width:18px; height:18px; margin-right:10px; stroke:#1f9d55; stroke-width:2.2; fill:none;
     }
 
@@ -114,7 +103,6 @@
       will-change:transform;
       touch-action: pan-y pinch-zoom;
     }
-
     .slide{
       min-width:100%;
       height:100%;
@@ -123,7 +111,6 @@
       padding:64px 10px 18px;
       user-select:none;
     }
-
     .slide img{
       max-width:100%;
       max-height:calc(100vh - 90px);
@@ -134,7 +121,6 @@
       pointer-events:auto;
       touch-action: pinch-zoom;
     }
-
     .dots{
       position:absolute; left:0; right:0; bottom:14px;
       display:flex; justify-content:center; gap:8px;
@@ -148,9 +134,32 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      margin:0 0 18px;
+      gap:10px;
+      margin:0 0 16px;
     }
+    .leftControls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:1;
+      min-width:0;
+    }
+    .homeBtn{
+      width:44px; height:44px;
+      border:none;
+      border-radius:14px;
+      background:rgba(255,255,255,0.16);
+      border:1px solid rgba(255,255,255,0.22);
+      display:grid; place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      flex:0 0 auto;
+    }
+    .homeBtn:active{ transform: scale(0.98); }
+    .homeBtn svg{ width:22px; height:22px; stroke:#fff; stroke-width:2.4; fill:none; opacity:0.95; }
+
     .loadTitle{
       font-size:24px;
       font-weight:900;
@@ -158,7 +167,12 @@
       margin:0;
       text-align:left;
       flex:1;
+      min-width:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
+
     .iconBtn{
       width:44px; height:44px;
       border:none;
@@ -170,6 +184,7 @@
       -webkit-tap-highlight-color:transparent;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      flex:0 0 auto;
     }
     .iconBtn:active{ transform: scale(0.98); }
     .iconBtn svg{ width:22px; height:22px; stroke:#fff; stroke-width:2.4; fill:none; opacity:0.95; }
@@ -194,6 +209,20 @@
       text-transform: uppercase;
     }
 
+    .selectWrap{ position:relative; }
+    .chev{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      width:18px; height:18px;
+      stroke:rgba(255,255,255,0.92);
+      stroke-width:2.6;
+      fill:none;
+      pointer-events:none;
+      opacity:0.95;
+    }
+
     select{
       width:100%;
       height:48px;
@@ -202,9 +231,10 @@
       background: rgba(0,0,0,0.18);
       color:#fff;
       font-size:15px;
-      padding: 0 12px;
+      padding: 0 44px 0 12px;
       outline:none;
       appearance:none;
+      -webkit-appearance:none;
     }
 
     .table{
@@ -214,10 +244,11 @@
       overflow:hidden;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.18);
+      table-layout: fixed;
     }
 
     .table th, .table td{
-      padding: 12px 12px;
+      padding: 10px 10px;
       border-bottom: 1px solid rgba(255,255,255,0.14);
       font-size: 15px;
     }
@@ -231,9 +262,26 @@
     .table td:last-child, .table th:last-child{
       text-align:right;
       font-variant-numeric: tabular-nums;
+      width: 62%;
     }
-
+    .table td:first-child, .table th:first-child{ width: 38%; }
     .table tr:last-child td{ border-bottom:none; }
+
+    .totalRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top: 12px;
+      padding: 12px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.14);
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
+    }
+    .totalLeft{ font-weight:900; letter-spacing:0.2px; }
+    .totalRight{ text-align:right; white-space:nowrap; }
 
     .subhint{
       margin: 10px 2px 0;
@@ -259,7 +307,6 @@
       <div class="result" id="result">—</div>
 
       <button id="pickBtn" class="btn" type="button" aria-label="Generate Gate">
-        <!-- generate/refresh icon -->
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
           <polyline points="21 3 21 9 15 9"/>
@@ -289,9 +336,16 @@
   <div id="screenLoad" class="screen">
     <div class="container">
       <div class="loadHeader">
-        <h2 class="loadTitle">Load</h2>
+        <div class="leftControls">
+          <button id="homeBtn" class="homeBtn" type="button" aria-label="Back to Home">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 19l-7-7 7-7"/>
+              <path d="M3 12h18"/>
+            </svg>
+          </button>
+          <h2 class="loadTitle">Load</h2>
+        </div>
 
-        <!-- Refresh (top-right) -->
         <button id="loadRefreshBtn" class="iconBtn" type="button" aria-label="Refresh Load">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
@@ -302,7 +356,13 @@
 
       <div class="panel">
         <div class="label">Aircraft</div>
-        <select id="aircraftSelect" aria-label="Select Aircraft"></select>
+
+        <div class="selectWrap">
+          <select id="aircraftSelect" aria-label="Select Aircraft"></select>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
 
         <table class="table" id="loadTable" aria-label="Load table">
           <thead>
@@ -313,6 +373,11 @@
           </thead>
           <tbody id="loadTbody"></tbody>
         </table>
+
+        <div class="totalRow" aria-label="Total load">
+          <div class="totalLeft">Total</div>
+          <div class="totalRight" id="totalText">—</div>
+        </div>
 
         <p class="subhint">Refresh 아이콘을 누르면 동일 기종 기준으로 로드(탑승 수)가 다시 랜덤 생성됩니다.</p>
       </div>
@@ -331,7 +396,6 @@
     </div>
 
     <div id="track" class="track">
-      <!-- 루트에 h1.png, h2.png 업로드 -->
       <div class="slide"><img src="h1.png" alt="h1 map" draggable="false" /></div>
       <div class="slide"><img src="h2.png" alt="h2 map" draggable="false" /></div>
     </div>
@@ -353,10 +417,9 @@
       btn.addEventListener('pointercancel', off);
     };
 
-    /* ---------- Screen nav (SPA) ---------- */
+    /* ---------- Screen nav ---------- */
     const screenMain = document.getElementById('screenMain');
     const screenLoad = document.getElementById('screenLoad');
-
     const showScreen = (name) => {
       const isMain = name === 'main';
       screenMain.classList.toggle('active', isMain);
@@ -375,7 +438,6 @@
 
     const poolA = range("A", 1, 24, new Set(["A6","A7","A18","A19"]));
     const poolB = range("B", 6, 32, new Set(["B7","B16"]));
-    // C37~C46 삭제 반영: C1~C23(단 C15 제외)만 사용
     const poolC = range("C", 1, 23, new Set(["C15"]));
     const pools = { A: poolA, B: poolB, C: poolC, Remote: ["Remote"] };
 
@@ -410,7 +472,7 @@
       playPop();
     });
 
-    /* ---------- Maps viewer + swipe (핀치 줌과 공존) ---------- */
+    /* ---------- Maps viewer + swipe ---------- */
     const viewer = document.getElementById('viewer');
     const closeViewer = document.getElementById('closeViewer');
     const track = document.getElementById('track');
@@ -448,7 +510,6 @@
     track.addEventListener('pointerdown', (e) => {
       if (!viewer.classList.contains('show')) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
       if (activePointers.size === 1) {
         swiping = true; startX = e.clientX; dx = 0;
         track.style.transition = 'none';
@@ -461,7 +522,6 @@
     track.addEventListener('pointermove', (e) => {
       if (!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
       if (!swiping || activePointers.size !== 1) return;
       dx = e.clientX - startX;
       const base = -mapIndex * vw();
@@ -486,15 +546,15 @@
 
     track.addEventListener('pointerup', onPointerUpOrCancel);
     track.addEventListener('pointercancel', onPointerUpOrCancel);
-
     setMapIndex(0, false);
 
     /* ---------- Load screen logic ---------- */
     const aircraftSelect = document.getElementById('aircraftSelect');
     const loadTbody = document.getElementById('loadTbody');
     const loadRefreshBtn = document.getElementById('loadRefreshBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const totalText = document.getElementById('totalText');
 
-    // Data: capacities per class. Arrays mean config-dependent capacity (choose one randomly per refresh).
     const aircraftData = [
       { name: "A350-900", classes: { C: 32, W: 21, Y: 259 } },
       { name: "A350-900 ULR", classes: { C: 32, W: 21, Y: 238 } },
@@ -509,48 +569,101 @@
       { name: "B777-300ER Game Changer", classes: { F: 6, C: 40, W: 24, Y: 256 } }
     ];
 
-    const classOrder = ["F", "C", "W", "Y"];
-    const className = { F: "F", C: "C", W: "W", Y: "Y" };
-
+    const classOrder = ["F","C","W","Y"];
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const pickCap = (v) => Array.isArray(v) ? v[randInt(0, v.length - 1)] : v;
+
+    /* =========================================================
+       ✅ 클래스별 "평균 탑승률"을 맞추는 랜덤 생성
+       - Beta 분포(0~1) 샘플링 → cap에 곱해서 좌석 수 산출
+       - Beta 평균 = a/(a+b) = 목표 평균 탑승률
+       - concentration(집중도) 값이 클수록 변동폭이 작아짐
+    ========================================================= */
+    const TARGET_MEAN = { F: 0.50, C: 0.75, W: 0.60, Y: 0.85 };
+    const CONCENTRATION = 10; // 6~20 사이로 취향 조절 가능(클수록 덜 흔들림)
+
+    const randn = () => {
+      // Box-Muller
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    };
+
+    const gammaSample = (shape) => {
+      // Marsaglia-Tsang (shape > 0)
+      if (shape < 1) {
+        // Gamma(k) = Gamma(k+1) * U^(1/k)
+        return gammaSample(shape + 1) * Math.pow(Math.random(), 1 / shape);
+      }
+      const d = shape - 1/3;
+      const c = 1 / Math.sqrt(9 * d);
+      while (true) {
+        let x = randn();
+        let v = 1 + c * x;
+        if (v <= 0) continue;
+        v = v * v * v;
+        const u = Math.random();
+        if (u < 1 - 0.0331 * (x * x) * (x * x)) return d * v;
+        if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+      }
+    };
+
+    const betaSample = (a, b) => {
+      const x = gammaSample(a);
+      const y = gammaSample(b);
+      return x / (x + y);
+    };
+
+    const sampleLoadByMean = (cap, mean) => {
+      // mean in (0,1)
+      const m = Math.min(0.999, Math.max(0.001, mean));
+      const a = m * CONCENTRATION;
+      const b = (1 - m) * CONCENTRATION;
+      const p = betaSample(a, b);                // 0~1
+      const seats = Math.round(p * cap);         // 0~cap
+      return Math.max(0, Math.min(cap, seats));
+    };
+
+    const fmtPct = (x) => `${(Math.round(x * 10) / 10).toFixed(1)}%`;
 
     const renderLoad = () => {
       const idx = aircraftSelect.selectedIndex;
       const aircraft = aircraftData[Math.max(0, idx)];
       if (!aircraft) return;
 
-      // Pick capacities (including random config choices)
+      // capacities (config 선택 포함)
       const caps = {};
-      for (const k of Object.keys(aircraft.classes)) {
-        caps[k] = pickCap(aircraft.classes[k]);
-      }
+      for (const k of Object.keys(aircraft.classes)) caps[k] = pickCap(aircraft.classes[k]);
 
-      // Random loads
+      // ✅ class별 목표 평균 탑승률로 랜덤 생성
       const loads = {};
       for (const k of Object.keys(caps)) {
-        loads[k] = randInt(0, caps[k]);
+        const mean = TARGET_MEAN[k] ?? 0.7; // 혹시 모를 예외 대비 기본값
+        loads[k] = sampleLoadByMean(caps[k], mean);
       }
 
-      // Build table
+      // table
       loadTbody.innerHTML = "";
       for (const cls of classOrder) {
         if (!(cls in caps)) continue;
-
         const tr = document.createElement("tr");
         const td1 = document.createElement("td");
         const td2 = document.createElement("td");
-
-        td1.textContent = className[cls];
-        td2.textContent = `${loads[cls]}/${caps[cls]}`;
-
+        td1.textContent = cls;
+        td2.textContent = `${loads[cls]} / ${caps[cls]}`; // 공백 포함
         tr.appendChild(td1);
         tr.appendChild(td2);
         loadTbody.appendChild(tr);
       }
+
+      // total + occupancy
+      const totalLoad = Object.keys(loads).reduce((s,k)=>s+loads[k], 0);
+      const totalCap  = Object.keys(caps).reduce((s,k)=>s+caps[k], 0);
+      const occ = totalCap > 0 ? (totalLoad / totalCap) : 0;
+      totalText.textContent = `${totalLoad} / ${totalCap}  ·  ${fmtPct(occ * 100)}`;
     };
 
-    // Populate dropdown
     const initAircraftSelect = () => {
       aircraftSelect.innerHTML = "";
       for (const a of aircraftData) {
@@ -564,21 +677,18 @@
     };
 
     addPressFeedback(loadRefreshBtn);
+    addPressFeedback(homeBtn);
 
     aircraftSelect.addEventListener("change", renderLoad);
     loadRefreshBtn.addEventListener("click", renderLoad);
+    homeBtn.addEventListener("click", () => showScreen('main'));
 
-    // Navigate to Load screen
     loadBtn.addEventListener("click", () => {
       showScreen('load');
-      // 최초 1회 초기화
       if (aircraftSelect.options.length === 0) initAircraftSelect();
       else renderLoad();
     });
-
-    // Optional: browser back to return main (simple)
-    // 사용자가 뒤로가기를 누를 때 메인으로 보이게 하고 싶다면 아래를 활성화하세요.
-    // window.addEventListener('popstate', () => showScreen('main'));
   </script>
 </body>
 </html>
+```
