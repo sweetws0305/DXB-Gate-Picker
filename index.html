@@ -257,6 +257,29 @@
       -webkit-appearance:none;
     }
 
+    /* ✅ Light Load toggle row */
+    .toggleRow{
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,0.12);
+      background: rgba(0,0,0,0.02);
+    }
+    .toggleRow .tLabel{
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+      letter-spacing:.2px;
+    }
+    .toggleRow input[type="checkbox"]{
+      width:22px; height:22px;
+      accent-color:#1f9d55;
+    }
+
     /* ✅ Class ↔ Load 간격 줄이기 + 로드 숫자도 같은 색 */
     .table{
       margin-top: 14px;
@@ -270,7 +293,7 @@
     }
 
     .table th, .table td{
-      padding: 8px 6px;            /* 좌우 패딩 축소 */
+      padding: 8px 6px;
       border-bottom: 1px solid rgba(0,0,0,0.08);
       font-size: 15px;
     }
@@ -283,25 +306,24 @@
     }
 
     .table th:first-child, .table td:first-child{
-      width: 18%;                  /* 첫 컬럼 더 좁게 */
-      padding-right: 4px;          /* 가운데 간격 축소 */
+      width: 18%;
+      padding-right: 4px;
     }
     .table th:last-child, .table td:last-child{
       width: 82%;
       text-align:right;
       font-variant-numeric: tabular-nums;
-      padding-left: 4px;           /* 가운데 간격 축소 */
-      color: inherit;              /* ✅ 행 색상을 로드에도 그대로 적용 */
+      padding-left: 4px;
+      color: inherit;
     }
     .table tr:last-child td{ border-bottom:none; }
 
-    .clsCell{ font-weight:900; }   /* 클래스 굵게 */
+    .clsCell{ font-weight:900; }
 
-    /* ✅ 행 단위 color → 클래스/로드 둘 다 동일 색 */
-    .rowF{ color:#8b0000; }  /* F 진한 빨간 */
-    .rowC{ color:#0b2a6f; }  /* C 남색 */
-    .rowW{ color:#6b21a8; }  /* W 보라 */
-    .rowY{ color:#0f7a2a; }  /* Y 초록 */
+    .rowF{ color:#8b0000; }
+    .rowC{ color:#0b2a6f; }
+    .rowW{ color:#6b21a8; }
+    .rowY{ color:#0f7a2a; }
 
     .totalRow{
       display:flex;
@@ -394,6 +416,12 @@
           </svg>
         </div>
 
+        <!-- ✅ Light Load checkbox -->
+        <div class="toggleRow" role="group" aria-label="Light Load toggle">
+          <div class="tLabel">Light Load</div>
+          <input id="lightLoadChk" type="checkbox" />
+        </div>
+
         <table class="table" id="loadTable" aria-label="Load table">
           <thead>
             <tr>
@@ -449,14 +477,10 @@
 
     const showScreen = (name) => {
       const isMain = name === 'main';
-
       screenMain.classList.toggle('active', isMain);
       screenLoad.classList.toggle('active', !isMain);
       screenLoad.setAttribute('aria-hidden', String(isMain));
-
-      // ✅ iOS에서 위/아래 바운스 시 배경색이 비치지 않도록 body 배경도 같이 변경
       document.body.style.background = isMain ? '#1f9d55' : '#ffffff';
-
       if (!isMain) screenLoad.scrollTop = 0;
     };
 
@@ -584,17 +608,18 @@
 
     /* ---------- Load screen logic ---------- */
     const aircraftSelect = document.getElementById('aircraftSelect');
+    const lightLoadChk = document.getElementById('lightLoadChk');
     const loadTbody = document.getElementById('loadTbody');
     const loadRefreshBtn = document.getElementById('loadRefreshBtn');
     const homeBtn = document.getElementById('homeBtn');
     const totalText = document.getElementById('totalText');
 
     const aircraftData = [
-      { name: "A350-900 Medium Range", classes: { C: 32, W: 21, Y: 259 } },
-      { name: "A350-900 Ultra Long Range", classes: { C: 32, W: 28, Y: 238 } },
+      { name: "A350 Mid Range", classes: { C: 32, W: 21, Y: 259 } },
+      { name: "A350 Ultra Long Range", classes: { C: 32, W: 21, Y: 238 } },
       { name: "A380 Two Class", classes: { C: 58, Y: 557 } },
-      { name: "A380 Three Class Medium Range", classes: { F: 14, C: 76, Y: [427, 429] } },
-      { name: "A380 Three Class Ulta Long Range", classes: { F: 14, C: 76, Y: [399, 401] } },
+      { name: "A380 Three Class Mid Range", classes: { F: 14, C: 76, Y: [427, 429] } },
+      { name: "A380 Three Class Ultra Long Range", classes: { F: 14, C: 76, Y: [399, 401] } },
       { name: "A380 Four Class", classes: { F: 14, C: 76, W: 56, Y: [322, 338, 341] } },
       { name: "B777-200LR", classes: { C: 38, Y: 264 } },
       { name: "B777-300ER Two Class", classes: { C: 35, Y: 386 } },
@@ -607,8 +632,14 @@
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const pickCap = (v) => Array.isArray(v) ? v[randInt(0, v.length - 1)] : v;
 
-    const TARGET_MEAN = { F: 0.50, C: 0.75, W: 0.60, Y: 0.85 };
+    // 기본 평균 탑승률(Mean)
+    const BASE_MEAN = { F: 0.50, C: 0.70, W: 0.60, Y: 0.80 };
+    // 100% 확률(그대로 유지)
     const FULL_CHANCE = { C: 0.10, Y: 0.15 };
+
+    // ✅ Light Load 체크 시 평균값을 20%p 낮춤
+    const LIGHT_DELTA = 0.20;
+
     const CONCENTRATION = 10;
 
     const randn = () => {
@@ -640,6 +671,7 @@
     };
 
     const clamp01 = (x) => Math.min(0.999, Math.max(0.001, x));
+
     const sampleLoadWithFullChance = (cap, targetMean, pFull) => {
       const p = Math.max(0, Math.min(1, pFull || 0));
       if (cap > 0 && Math.random() < p) return cap;
@@ -659,6 +691,12 @@
 
     const fmtPct = (x) => `${(Math.round(x * 10) / 10).toFixed(1)}%`;
 
+    const getTargetMean = (cls) => {
+      const base = BASE_MEAN[cls] ?? 0.7;
+      if (!lightLoadChk.checked) return base;
+      return Math.max(0.01, base - LIGHT_DELTA); // ✅ 20%p 낮춤
+    };
+
     const renderLoad = () => {
       const idx = aircraftSelect.selectedIndex;
       const aircraft = aircraftData[Math.max(0, idx)];
@@ -669,7 +707,7 @@
 
       const loads = {};
       for (const k of Object.keys(caps)) {
-        const mean = TARGET_MEAN[k] ?? 0.7;
+        const mean = getTargetMean(k);
         const pFull = FULL_CHANCE[k] ?? 0;
         loads[k] = sampleLoadWithFullChance(caps[k], mean, pFull);
       }
@@ -718,10 +756,11 @@
     addPressFeedback(homeBtn);
 
     aircraftSelect.addEventListener("change", renderLoad);
+    lightLoadChk.addEventListener("change", renderLoad);  // ✅ 체크 변경 시 즉시 반영
     loadRefreshBtn.addEventListener("click", renderLoad);
     homeBtn.addEventListener("click", () => showScreen('main'));
 
-    loadBtn.addEventListener("click", () => {
+    document.getElementById('loadBtn').addEventListener("click", () => {
       showScreen('load');
       if (aircraftSelect.options.length === 0) initAircraftSelect();
       else renderLoad();
@@ -729,5 +768,3 @@
   </script>
 </body>
 </html>
-
-
