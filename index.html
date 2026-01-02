@@ -57,7 +57,7 @@
       color:#1f9d55; letter-spacing:.2px;
     }
     #mapBtn svg, #loadBtn svg{
-      width:18px; height:18px; margin-right:10px; stroke:#1f9d55; stroke-width:2.2; fill:none;
+      width:20px; height:20px; margin-right:10px; stroke:#1f9d55; stroke-width:2.2; fill:none;
     }
 
     /* ---------- Fullscreen viewer (Maps) ---------- */
@@ -128,7 +128,15 @@
     .dot{ width:7px; height:7px; border-radius:999px; background:rgba(255,255,255,.35); }
     .dot.active{ background:rgba(255,255,255,.92); }
 
-    /* ---------- Load Screen ---------- */
+    /* ---------- Load Screen (White background + black text) ---------- */
+    #screenLoad{
+      background:#ffffff;
+      min-height:100vh;
+      color:#000;
+    }
+    #screenLoad .container{ color:#000; }
+    #screenLoad .loadTitle{ color:#000; }
+
     .loadHeader{
       display:flex;
       align-items:center;
@@ -143,21 +151,25 @@
       flex:1;
       min-width:0;
     }
-    .homeBtn{
+
+    .homeBtn, .iconBtn{
       width:44px; height:44px;
       border:none;
       border-radius:14px;
-      background:rgba(255,255,255,0.16);
-      border:1px solid rgba(255,255,255,0.22);
+      background:#ffffff;
+      border:1px solid rgba(0,0,0,0.16);
       display:grid; place-items:center;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
       flex:0 0 auto;
     }
-    .homeBtn:active{ transform: scale(0.98); }
-    .homeBtn svg{ width:22px; height:22px; stroke:#fff; stroke-width:2.4; fill:none; opacity:0.95; }
+    .homeBtn:active, .iconBtn:active{ transform: scale(0.98); }
+    .homeBtn svg, .iconBtn svg{
+      width:22px; height:22px;
+      stroke:#111; stroke-width:2.4; fill:none;
+      opacity:0.95;
+    }
 
     .loadTitle{
       font-size:24px;
@@ -172,31 +184,14 @@
       text-overflow:ellipsis;
     }
 
-    .iconBtn{
-      width:44px; height:44px;
-      border:none;
-      border-radius:14px;
-      background:rgba(255,255,255,0.16);
-      border:1px solid rgba(255,255,255,0.22);
-      display:grid; place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      flex:0 0 auto;
-    }
-    .iconBtn:active{ transform: scale(0.98); }
-    .iconBtn svg{ width:22px; height:22px; stroke:#fff; stroke-width:2.4; fill:none; opacity:0.95; }
-
     .panel{
       width:100%;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
+      background:#ffffff;
+      border: 1px solid rgba(0,0,0,0.12);
       border-radius: 18px;
       padding: 14px;
       text-align:left;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.08);
     }
 
     .label{
@@ -206,6 +201,7 @@
       opacity:0.9;
       margin:0 0 8px;
       text-transform: uppercase;
+      color:#111;
     }
 
     .selectWrap{ position:relative; }
@@ -215,7 +211,7 @@
       top:50%;
       transform:translateY(-50%);
       width:18px; height:18px;
-      stroke:rgba(255,255,255,0.92);
+      stroke:rgba(0,0,0,0.72);
       stroke-width:2.6;
       fill:none;
       pointer-events:none;
@@ -226,9 +222,9 @@
       width:100%;
       height:48px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,0.22);
-      background: rgba(0,0,0,0.18);
-      color:#fff;
+      border:1px solid rgba(0,0,0,0.16);
+      background:#fff;
+      color:#000;
       font-size:15px;
       padding: 0 44px 0 12px;
       outline:none;
@@ -242,29 +238,37 @@
       border-collapse: collapse;
       overflow:hidden;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.18);
+      border: 1px solid rgba(0,0,0,0.12);
       table-layout: fixed;
+      color:#000;
     }
 
     .table th, .table td{
       padding: 10px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.14);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
       font-size: 15px;
     }
 
     .table th{
       text-align:left;
       font-weight:900;
-      background: rgba(0,0,0,0.14);
+      background: rgba(0,0,0,0.04);
+      color:#000;
     }
 
     .table td:last-child, .table th:last-child{
       text-align:right;
       font-variant-numeric: tabular-nums;
       width: 62%;
+      color:#000;
     }
     .table td:first-child, .table th:first-child{ width: 38%; }
     .table tr:last-child td{ border-bottom:none; }
+
+    .rowF td{ color:#8b0000; }
+    .rowC td{ color:#0b2a6f; }
+    .rowW td{ color:#6b21a8; }
+    .rowY td{ color:#0f7a2a; }
 
     .totalRow{
       display:flex;
@@ -274,10 +278,11 @@
       margin-top: 12px;
       padding: 12px 10px;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(0,0,0,0.14);
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(0,0,0,0.04);
       font-size: 15px;
       font-variant-numeric: tabular-nums;
+      color:#000;
     }
     .totalLeft{ font-weight:900; letter-spacing:0.2px; }
     .totalRight{ text-align:right; white-space:nowrap; }
@@ -287,6 +292,7 @@
       font-size: 12px;
       opacity: 0.85;
       line-height: 1.35;
+      color:#111;
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -320,11 +326,13 @@
         View Map
       </button>
 
+      <!-- ✅ Load 버튼 아이콘을 "좌석" 모양으로 변경 -->
       <button id="loadBtn" class="btn" type="button" aria-label="Load">
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3v10"/>
-          <path d="M8.5 6.5L12 3l3.5 3.5"/>
-          <path d="M4 14h16v6H4z"/>
+          <!-- seat icon -->
+          <path d="M7 13V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v7"/>
+          <path d="M5 13h14v3a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-3z"/>
+          <path d="M6 19v2M18 19v2"/>
         </svg>
         Load
       </button>
@@ -572,17 +580,11 @@
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const pickCap = (v) => Array.isArray(v) ? v[randInt(0, v.length - 1)] : v;
 
-    /* =========================================================
-       ✅ 클래스별 "평균 탑승률"을 맞추는 랜덤 생성
-       - Beta 분포(0~1) 샘플링 → cap에 곱해서 좌석 수 산출
-       - Beta 평균 = a/(a+b) = 목표 평균 탑승률
-       - concentration(집중도) 값이 클수록 변동폭이 작아짐
-    ========================================================= */
     const TARGET_MEAN = { F: 0.50, C: 0.75, W: 0.60, Y: 0.85 };
-    const CONCENTRATION = 10; // 6~20 사이로 취향 조절 가능(클수록 덜 흔들림)
+    const FULL_CHANCE = { C: 0.10, Y: 0.15 };
+    const CONCENTRATION = 10;
 
     const randn = () => {
-      // Box-Muller
       let u = 0, v = 0;
       while (u === 0) u = Math.random();
       while (v === 0) v = Math.random();
@@ -590,11 +592,7 @@
     };
 
     const gammaSample = (shape) => {
-      // Marsaglia-Tsang (shape > 0)
-      if (shape < 1) {
-        // Gamma(k) = Gamma(k+1) * U^(1/k)
-        return gammaSample(shape + 1) * Math.pow(Math.random(), 1 / shape);
-      }
+      if (shape < 1) return gammaSample(shape + 1) * Math.pow(Math.random(), 1 / shape);
       const d = shape - 1/3;
       const c = 1 / Math.sqrt(9 * d);
       while (true) {
@@ -614,13 +612,22 @@
       return x / (x + y);
     };
 
-    const sampleLoadByMean = (cap, mean) => {
-      // mean in (0,1)
-      const m = Math.min(0.999, Math.max(0.001, mean));
-      const a = m * CONCENTRATION;
-      const b = (1 - m) * CONCENTRATION;
-      const p = betaSample(a, b);                // 0~1
-      const seats = Math.round(p * cap);         // 0~cap
+    const clamp01 = (x) => Math.min(0.999, Math.max(0.001, x));
+
+    const sampleLoadWithFullChance = (cap, targetMean, pFull) => {
+      const p = Math.max(0, Math.min(1, pFull || 0));
+      if (cap > 0 && Math.random() < p) return cap;
+
+      const t = clamp01(targetMean);
+      const denom = (1 - p);
+      let mBase = denom <= 0 ? 0.999 : (t - p) / denom;
+      mBase = clamp01(Math.max(0, mBase));
+
+      const a = mBase * CONCENTRATION;
+      const b = (1 - mBase) * CONCENTRATION;
+
+      const frac = betaSample(a, b);
+      const seats = Math.round(frac * cap);
       return Math.max(0, Math.min(cap, seats));
     };
 
@@ -631,36 +638,41 @@
       const aircraft = aircraftData[Math.max(0, idx)];
       if (!aircraft) return;
 
-      // capacities (config 선택 포함)
       const caps = {};
       for (const k of Object.keys(aircraft.classes)) caps[k] = pickCap(aircraft.classes[k]);
 
-      // ✅ class별 목표 평균 탑승률로 랜덤 생성
       const loads = {};
       for (const k of Object.keys(caps)) {
-        const mean = TARGET_MEAN[k] ?? 0.7; // 혹시 모를 예외 대비 기본값
-        loads[k] = sampleLoadByMean(caps[k], mean);
+        const mean = TARGET_MEAN[k] ?? 0.7;
+        const pFull = FULL_CHANCE[k] ?? 0;
+        loads[k] = sampleLoadWithFullChance(caps[k], mean, pFull);
       }
 
-      // table
       loadTbody.innerHTML = "";
       for (const cls of classOrder) {
         if (!(cls in caps)) continue;
+
         const tr = document.createElement("tr");
+        if (cls === "F") tr.classList.add("rowF");
+        if (cls === "C") tr.classList.add("rowC");
+        if (cls === "W") tr.classList.add("rowW");
+        if (cls === "Y") tr.classList.add("rowY");
+
         const td1 = document.createElement("td");
         const td2 = document.createElement("td");
         td1.textContent = cls;
-        td2.textContent = `${loads[cls]} / ${caps[cls]}`; // 공백 포함
+        td2.textContent = `${loads[cls]} / ${caps[cls]}`;
         tr.appendChild(td1);
         tr.appendChild(td2);
         loadTbody.appendChild(tr);
       }
 
-      // total + occupancy
       const totalLoad = Object.keys(loads).reduce((s,k)=>s+loads[k], 0);
       const totalCap  = Object.keys(caps).reduce((s,k)=>s+caps[k], 0);
       const occ = totalCap > 0 ? (totalLoad / totalCap) : 0;
-      totalText.textContent = `${totalLoad} / ${totalCap}  ·  ${fmtPct(occ * 100)}`;
+
+      /* ✅ "223 / 310 (71.9%)" 형태 + 가운데점 제거 */
+      totalText.textContent = `${totalLoad} / ${totalCap} (${fmtPct(occ * 100)})`;
     };
 
     const initAircraftSelect = () => {
@@ -690,4 +702,3 @@
   </script>
 </body>
 </html>
-
