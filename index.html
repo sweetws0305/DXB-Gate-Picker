@@ -7,17 +7,27 @@
 
   <style>
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
 
     body{
-      margin:0; min-height:100vh; background:#1f9d55;
+      margin:0;
+      min-height:100vh;
+      background:#1f9d55;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      display:flex; align-items:center; justify-content:center; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      color:#fff;
     }
 
     .screen{ width:100%; display:none; }
     .screen.active{ display:block; }
 
-    .container{ width:100%; max-width:420px; padding:32px 24px 40px; text-align:center; margin:0 auto; }
+    .container{
+      width:100%;
+      max-width:420px;
+      padding:32px 24px 40px;
+      text-align:center;
+      margin:0 auto;
+    }
 
     h1{ font-size:28px; margin:0 0 40px; font-weight:800; letter-spacing:.5px; }
 
@@ -35,7 +45,11 @@
     .pop{ animation:pop 460ms cubic-bezier(.2,.9,.2,1) both; }
 
     .btn{
-      width:100%; border:none; border-radius:18px; background:#fff; cursor:pointer;
+      width:100%;
+      border:none;
+      border-radius:18px;
+      background:#fff;
+      cursor:pointer;
       box-shadow:0 7px 0 #148243;
       display:flex; align-items:center; justify-content:center;
       transition:transform .06s ease, box-shadow .06s ease, background-color .12s ease;
@@ -137,6 +151,7 @@
       z-index:20;
       overflow:auto;
       -webkit-overflow-scrolling:touch;
+      overscroll-behavior: contain;
     }
     #screenLoad .container{
       color:#000;
@@ -242,7 +257,7 @@
       -webkit-appearance:none;
     }
 
-    /* ✅ 표의 "Class ↔ Load" 간격 축소: 첫 컬럼 폭 축소 + 패딩 축소 + auto 레이아웃 */
+    /* ✅ Class ↔ Load 간격 줄이기 + 로드 숫자도 같은 색 */
     .table{
       margin-top: 14px;
       width:100%;
@@ -250,12 +265,12 @@
       overflow:hidden;
       border-radius: 14px;
       border: 1px solid rgba(0,0,0,0.12);
-      table-layout: auto;
+      table-layout: fixed;
       color:#000;
     }
 
     .table th, .table td{
-      padding: 9px 8px; /* 기존보다 좌우 패딩 축소 */
+      padding: 8px 6px;            /* 좌우 패딩 축소 */
       border-bottom: 1px solid rgba(0,0,0,0.08);
       font-size: 15px;
     }
@@ -267,28 +282,26 @@
       color:#000;
     }
 
-    /* 첫 컬럼을 좁게 */
-    .table td:first-child, .table th:first-child{
-      width: 22%;
-      padding-right: 6px; /* Class-Load 사이 간격 더 축소 */
+    .table th:first-child, .table td:first-child{
+      width: 18%;                  /* 첫 컬럼 더 좁게 */
+      padding-right: 4px;          /* 가운데 간격 축소 */
     }
-    .table td:last-child, .table th:last-child{
-      width: 78%;
+    .table th:last-child, .table td:last-child{
+      width: 82%;
       text-align:right;
       font-variant-numeric: tabular-nums;
-      padding-left: 6px;
-      color: inherit; /* ✅ 행 색상이 로드 숫자에도 적용되도록 */
+      padding-left: 4px;           /* 가운데 간격 축소 */
+      color: inherit;              /* ✅ 행 색상을 로드에도 그대로 적용 */
     }
     .table tr:last-child td{ border-bottom:none; }
 
-    /* ✅ 클래스 글자 굵게 */
-    .clsCell{ font-weight:900; }
+    .clsCell{ font-weight:900; }   /* 클래스 굵게 */
 
-    /* ✅ 행 단위로 "클래스 + 로드" 모두 색상 적용 */
-    .rowF td{ color:#8b0000; } /* 진한 빨간색 */
-    .rowC td{ color:#0b2a6f; } /* 남색 */
-    .rowW td{ color:#6b21a8; } /* 보라색 */
-    .rowY td{ color:#0f7a2a; } /* 초록색 */
+    /* ✅ 행 단위 color → 클래스/로드 둘 다 동일 색 */
+    .rowF{ color:#8b0000; }  /* F 진한 빨간 */
+    .rowC{ color:#0b2a6f; }  /* C 남색 */
+    .rowW{ color:#6b21a8; }  /* W 보라 */
+    .rowY{ color:#0f7a2a; }  /* Y 초록 */
 
     .totalRow{
       display:flex;
@@ -436,9 +449,14 @@
 
     const showScreen = (name) => {
       const isMain = name === 'main';
+
       screenMain.classList.toggle('active', isMain);
       screenLoad.classList.toggle('active', !isMain);
       screenLoad.setAttribute('aria-hidden', String(isMain));
+
+      // ✅ iOS에서 위/아래 바운스 시 배경색이 비치지 않도록 body 배경도 같이 변경
+      document.body.style.background = isMain ? '#1f9d55' : '#ffffff';
+
       if (!isMain) screenLoad.scrollTop = 0;
     };
 
@@ -669,7 +687,7 @@
         const td1 = document.createElement("td");
         const td2 = document.createElement("td");
 
-        td1.classList.add("clsCell");  // 클래스 굵게
+        td1.classList.add("clsCell");
         td1.textContent = cls;
         td2.textContent = `${loads[cls]} / ${caps[cls]}`;
 
@@ -681,7 +699,6 @@
       const totalLoad = Object.keys(loads).reduce((s,k)=>s+loads[k], 0);
       const totalCap  = Object.keys(caps).reduce((s,k)=>s+caps[k], 0);
       const occ = totalCap > 0 ? (totalLoad / totalCap) : 0;
-
       totalText.textContent = `${totalLoad} / ${totalCap} (${fmtPct(occ * 100)})`;
     };
 
