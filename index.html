@@ -129,7 +129,6 @@
     .dot.active{ background:rgba(255,255,255,.92); }
 
     /* ---------- Load Screen (Full-bleed White) ---------- */
-    /* ✅ body의 flex 정렬 영향 제거를 위해 Load 화면을 fixed로 전체 덮기 */
     #screenLoad{
       position:fixed;
       inset:0;
@@ -146,7 +145,6 @@
       padding:24px 18px 40px;
       text-align:center;
     }
-    #screenLoad .loadTitle{ color:#000; }
 
     .loadHeader{
       display:flex;
@@ -193,6 +191,7 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      color:#000;
     }
 
     .panel{
@@ -243,6 +242,7 @@
       -webkit-appearance:none;
     }
 
+    /* ✅ 표의 "Class ↔ Load" 간격 축소: 첫 컬럼 폭 축소 + 패딩 축소 + auto 레이아웃 */
     .table{
       margin-top: 14px;
       width:100%;
@@ -250,12 +250,12 @@
       overflow:hidden;
       border-radius: 14px;
       border: 1px solid rgba(0,0,0,0.12);
-      table-layout: fixed;
+      table-layout: auto;
       color:#000;
     }
 
     .table th, .table td{
-      padding: 10px 10px;
+      padding: 9px 8px; /* 기존보다 좌우 패딩 축소 */
       border-bottom: 1px solid rgba(0,0,0,0.08);
       font-size: 15px;
     }
@@ -267,24 +267,29 @@
       color:#000;
     }
 
+    /* 첫 컬럼을 좁게 */
+    .table td:first-child, .table th:first-child{
+      width: 22%;
+      padding-right: 6px; /* Class-Load 사이 간격 더 축소 */
+    }
     .table td:last-child, .table th:last-child{
+      width: 78%;
       text-align:right;
       font-variant-numeric: tabular-nums;
-      width: 62%;
-      color:#000;
+      padding-left: 6px;
+      color: inherit; /* ✅ 행 색상이 로드 숫자에도 적용되도록 */
     }
-    .table td:first-child, .table th:first-child{ width: 38%; }
     .table tr:last-child td{ border-bottom:none; }
 
-    /* ✅ 클래스별 색상 (클래스 + 로드 모두) + 클래스 글자 굵게 */
-    .clsCell{ font-weight:900; } /* 클래스 글자 굵게 */
+    /* ✅ 클래스 글자 굵게 */
+    .clsCell{ font-weight:900; }
 
-    .rowF td{ color:#8b0000; }
-    .rowC td{ color:#0b2a6f; }
-    .rowW td{ color:#6b21a8; }
-    .rowY td{ color:#0f7a2a; }
+    /* ✅ 행 단위로 "클래스 + 로드" 모두 색상 적용 */
+    .rowF td{ color:#8b0000; } /* 진한 빨간색 */
+    .rowC td{ color:#0b2a6f; } /* 남색 */
+    .rowW td{ color:#6b21a8; } /* 보라색 */
+    .rowY td{ color:#0f7a2a; } /* 초록색 */
 
-    /* Total */
     .totalRow{
       display:flex;
       justify-content:space-between;
@@ -301,14 +306,6 @@
     }
     .totalLeft{ font-weight:900; letter-spacing:0.2px; }
     .totalRight{ text-align:right; white-space:nowrap; }
-
-    .subhint{
-      margin: 10px 2px 0;
-      font-size: 12px;
-      opacity: 0.85;
-      line-height: 1.35;
-      color:#111;
-    }
 
     @media (prefers-reduced-motion: reduce){
       .track{ transition:none; }
@@ -398,8 +395,6 @@
           <div class="totalLeft">Total</div>
           <div class="totalRight" id="totalText">—</div>
         </div>
-
-        <p class="subhint">Refresh 아이콘을 누르면 동일 기종 기준으로 로드(탑승 수)가 다시 랜덤 생성됩니다.</p>
       </div>
     </div>
   </div>
@@ -427,7 +422,6 @@
   </div>
 
   <script>
-    /* ---------- Press feedback ---------- */
     const addPressFeedback = (btn) => {
       const on = () => btn.classList.add('pressed');
       const off = () => btn.classList.remove('pressed');
@@ -437,24 +431,15 @@
       btn.addEventListener('pointercancel', off);
     };
 
-    /* ---------- Screen nav ---------- */
     const screenMain = document.getElementById('screenMain');
     const screenLoad = document.getElementById('screenLoad');
 
     const showScreen = (name) => {
       const isMain = name === 'main';
-
       screenMain.classList.toggle('active', isMain);
       screenLoad.classList.toggle('active', !isMain);
-
-      // 접근성
       screenLoad.setAttribute('aria-hidden', String(isMain));
-
-      // main에서는 body flex 정렬 사용, load에서는 fixed full-screen이므로 별도 처리 불필요
-      if (!isMain) {
-        // load 진입 시 스크롤 최상단
-        screenLoad.scrollTop = 0;
-      }
+      if (!isMain) screenLoad.scrollTop = 0;
     };
 
     /* ---------- Gate logic ---------- */
@@ -684,9 +669,7 @@
         const td1 = document.createElement("td");
         const td2 = document.createElement("td");
 
-        // ✅ 클래스 글자 굵게
-        td1.classList.add("clsCell");
-
+        td1.classList.add("clsCell");  // 클래스 굵게
         td1.textContent = cls;
         td2.textContent = `${loads[cls]} / ${caps[cls]}`;
 
