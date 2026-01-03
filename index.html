@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
   <title>DXB Gate Picker</title>
 
-  <style>
+    <style>
+    @font-face{
+      font-family:"LocalFont";
+      src: url("font.ttf") format("truetype");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
 
@@ -16,6 +23,14 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       display:flex; align-items:center; justify-content:center;
       color:#fff;
+    }
+
+        #screenLoad, #viewer{
+      font-family:"LocalFont",sans-serif;
+    }
+    #screenLoad button, #screenLoad input, #screenLoad select,
+    #viewer button, #viewer input, #viewer select{
+      font-family:"LocalFont",sans-serif;
     }
 
     .screen{ width:100%; display:none; }
@@ -257,7 +272,7 @@
       -webkit-appearance:none;
     }
 
-    /* ✅ Light Load toggle row */
+    /* ??Light Load toggle row */
     .toggleRow{
       margin-top:10px;
       display:flex;
@@ -280,7 +295,7 @@
       accent-color:#1f9d55;
     }
 
-    /* ✅ Class ↔ Load 간격 줄이기 + 로드 숫자도 같은 색 */
+    /* ??Class ??Load 간격 줄이�?+ 로드 ?�자??같�? ??*/
     .table{
       margin-top: 14px;
       width:100%;
@@ -305,20 +320,20 @@
       color:#000;
     }
 
-    .table th:first-child, .table td:first-child{
-      width: 18%;
-      padding-right: 4px;
+        .table th:first-child, .table td:first-child{
+      width: 60%;
+      padding-right: 6px;
     }
-    .table th:last-child, .table td:last-child{
-      width: 82%;
+        .table th:last-child, .table td:last-child{
+      width: 40%;
       text-align:right;
       font-variant-numeric: tabular-nums;
-      padding-left: 4px;
+      padding-left: 6px;
       color: inherit;
     }
     .table tr:last-child td{ border-bottom:none; }
 
-    .clsCell{ font-weight:900; }
+    .clsCell{ font-weight:900; white-space: nowrap; }
 
     .rowF{ color:#8b0000; }
     .rowC{ color:#0b2a6f; }
@@ -339,9 +354,8 @@
       font-variant-numeric: tabular-nums;
       color:#000;
     }
-    .totalLeft{ font-weight:900; letter-spacing:0.2px; }
+        .totalLeft{ font-weight:900; letter-spacing:0.2px; }
     .totalRight{ text-align:right; white-space:nowrap; }
-
     .seatmapHeader{
       margin-top:16px;
       display:flex;
@@ -426,7 +440,7 @@
     <div class="container">
       <h1>DXB Gate Picker</h1>
 
-      <div class="result" id="result">—</div>
+      <div class="result" id="result">--</div>
 
       <button id="pickBtn" class="btn" type="button" aria-label="Generate Gate">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -486,7 +500,7 @@
           </svg>
         </div>
 
-        <!-- ✅ Light Load checkbox -->
+        <!-- ??Light Load checkbox -->
         <div class="toggleRow" role="group" aria-label="Light Load toggle">
           <div class="tLabel">Light Load</div>
           <input id="lightLoadChk" type="checkbox" />
@@ -504,10 +518,9 @@
 
         <div class="totalRow" aria-label="Total load">
           <div class="totalLeft">Total</div>
-          <div class="totalRight" id="totalText">—</div>
+          <div class="totalRight" id="totalText">0 / 0 (0.0%)</div>
         </div>
-
-        <div class="seatmapHeader">
+<div class="seatmapHeader">
           <div class="label">Seatmap</div>
         </div>
         <div class="seatmapMeta" id="seatmapMeta">Seatmap not loaded</div>
@@ -690,8 +703,7 @@
     const loadTbody = document.getElementById('loadTbody');
     const loadRefreshBtn = document.getElementById('loadRefreshBtn');
     const homeBtn = document.getElementById('homeBtn');
-    const totalText = document.getElementById('totalText');
-    const seatmapFile = document.getElementById('seatmapFile');
+    const totalText = document.getElementById('totalText');    const seatmapFile = document.getElementById('seatmapFile');
     const seatmapMeta = document.getElementById('seatmapMeta');
     const seatmapWrap = document.getElementById('seatmapWrap');
 
@@ -714,17 +726,22 @@
       { name: "B777-300ER Four Class", classes: { F: 8, C: 40, W: 24, Y: [256, 260] } },
       { name: "B777-300ER Four Class Game Changer", classes: { F: 6, C: 38, W: 24, Y: 256 } }
     ];
-
     const classOrder = ["F","C","W","Y"];
+    const classLabels = {
+      F: "First Class",
+      C: "Business Class",
+      W: "Premium Economy",
+      Y: "Economy Class"
+    };
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const pickCap = (v) => Array.isArray(v) ? v[randInt(0, v.length - 1)] : v;
 
-    // 기본 평균 탑승률(Mean)
+    // 기본 ?�균 ?�승�?Mean)
     const BASE_MEAN = { F: 0.50, C: 0.70, W: 0.60, Y: 0.80 };
-    // 100% 확률(그대로 유지)
+    // 100% ?�률(그�?�??��?)
     const FULL_CHANCE = { C: 0.10, Y: 0.15 };
 
-    // ✅ Light Load 체크 시 평균값을 20%p 낮춤
+    // ??Light Load 체크 ???�균값을 20%p ??��
     const LIGHT_DELTA = 0.20;
 
     const CONCENTRATION = 10;
@@ -781,7 +798,7 @@
     const getTargetMean = (cls) => {
       const base = BASE_MEAN[cls] ?? 0.7;
       if (!lightLoadChk.checked) return base;
-      return Math.max(0.01, base - LIGHT_DELTA); // ✅ 20%p 낮춤
+      return Math.max(0.01, base - LIGHT_DELTA); // ??20%p ??��
     };
 
     const pickSeatmapVariant = (aircraft) => {
@@ -842,7 +859,7 @@
         const td2 = document.createElement("td");
 
         td1.classList.add("clsCell");
-        td1.textContent = cls;
+        td1.textContent = classLabels[cls] || cls;
         td2.textContent = `${loads[cls]} / ${caps[cls]}`;
 
         tr.appendChild(td1);
@@ -853,9 +870,7 @@
       const totalLoad = Object.keys(loads).reduce((s,k)=>s+loads[k], 0);
       const totalCap  = Object.keys(caps).reduce((s,k)=>s+caps[k], 0);
       const occ = totalCap > 0 ? (totalLoad / totalCap) : 0;
-      totalText.textContent = `${totalLoad} / ${totalCap} (${fmtPct(occ * 100)})`;
-
-      currentLoads = loads;
+      totalText.textContent = `${totalLoad} / ${totalCap} (${fmtPct(occ * 100)})`;      currentLoads = loads;
       currentAircraftName = aircraft.name;
       renderSeatmap();
     };
@@ -875,8 +890,7 @@
       }
       return parts.join(" ");
     };
-
-    const normalizeClass = (v) => {
+        const normalizeClass = (v) => {
       if (!v) return "";
       const t = String(v).trim().toUpperCase();
       return ["F","C","W","Y"].includes(t) ? t : "";
@@ -945,7 +959,15 @@
           currentY = null;
         }
       }
-
+      let firstSeatRow = rowsRaw.findIndex((row) => row.hasSeat);
+      let lastSeatRow = rowsRaw.length - 1;
+      while (lastSeatRow >= 0 && !rowsRaw[lastSeatRow].hasSeat) lastSeatRow -= 1;
+      if (firstSeatRow === -1) {
+        rowsRaw.length = 0;
+      } else {
+        rowsRaw.splice(0, firstSeatRow);
+        rowsRaw.length = Math.max(0, lastSeatRow - firstSeatRow + 1);
+      }
       const normalizedRows = rowsRaw.map((row) => {
         if (!row.hasSeat || !row.className) return { cells: [], cols: 0, hasSeat: false };
         let start = row.firstCol;
@@ -1071,7 +1093,9 @@
     const C121_LOW_LOAD = 0.45;
     const C121_EF_SHARE = 0.3;
     const C121_WINDOW_SHARE = 0.7;
-    const ADJACENT_PAIR_SHARE = 0.2;
+    const W_FRONT_SHARE = 0.7;
+    const W_FRONT_SLICE = 0.45;
+const ADJACENT_PAIR_SHARE = 0.2;
     const B777_C_GAP_X = 10;
     const B777_C_GAP_Y = 4;
 
@@ -1153,6 +1177,37 @@
       return ordered;
     };
 
+    const buildFrontBiasOrder = (seats) => {
+      const byRow = new Map();
+      for (const seat of seats) {
+        if (!byRow.has(seat.row)) byRow.set(seat.row, []);
+        byRow.get(seat.row).push(seat);
+      }
+      const rowKeys = Array.from(byRow.keys()).sort((a, b) => a - b);
+      if (rowKeys.length === 0) return [];
+      const frontCount = Math.max(1, Math.ceil(rowKeys.length * W_FRONT_SLICE));
+      const front = rowKeys.slice(0, frontCount);
+      const back = rowKeys.slice(frontCount);
+      const rowOrder = [];
+      while (front.length || back.length) {
+        if (front.length && (back.length === 0 || Math.random() < W_FRONT_SHARE)) {
+          rowOrder.push(front.shift());
+        } else {
+          const idx = Math.floor(Math.random() * back.length);
+          rowOrder.push(back.splice(idx, 1)[0]);
+        }
+      }
+      const ordered = [];
+      rowOrder.forEach((rowKey) => {
+        const rowSeats = byRow.get(rowKey);
+        rowSeats.sort((a, b) => a.col - b.col);
+        if (Math.random() < 0.5) rowSeats.reverse();
+        ordered.push(...rowSeats);
+      });
+      ordered.reverse();
+      return ordered;
+    };
+
     const buildOccupancy = (seatmap, loads) => {
       const seatsByClass = { F: [], C: [], W: [], Y: [] };
       const cRowCounts = [];
@@ -1167,6 +1222,8 @@
         if (count) cRowCounts.push(count);
       });
       let isC121 = false;
+      let isC222 = false;
+      let isC232 = false;
       if (cRowCounts.length) {
         const freq = new Map();
         for (const count of cRowCounts) {
@@ -1181,6 +1238,8 @@
           }
         }
         isC121 = mode === 4;
+        isC222 = mode === 6;
+        isC232 = mode === 7;
       }
       seatmap.rows.forEach((row, rIdx) => {
         if (!row.hasSeat) return;
@@ -1192,10 +1251,13 @@
         if (!seatCols.length) return;
         const firstSeat = seatCols[0];
         const lastSeat = seatCols[seatCols.length - 1];
-        for (const c of seatCols) {
+        for (let idx = 0; idx < seatCols.length; idx++) {
+          const c = seatCols[idx];
           const cls = rowCells[c];
           const colIndex = seatmap.baseCol + (row.offset || 0) + c + 1;
           const isEF = cls === "C" && (colIndex === 5 || colIndex === 6);
+          const isE = cls === "C" && colIndex === 5;
+          const isCenter = cls === "C" && isC222 && seatCols.length === 6 && (idx === 2 || idx === 3);
           const isCD = cls === "F" && (colIndex === 3 || colIndex === 4);
           const hasSeatLeft = c > firstSeat;
           const hasSeatRight = c < lastSeat;
@@ -1204,7 +1266,7 @@
           let type = "middle";
           if (!hasSeatLeft || !hasSeatRight) type = "window";
           else if ((leftEmpty && hasSeatLeft) || (rightEmpty && hasSeatRight)) type = "aisle";
-          seatsByClass[cls].push({ key: `${rIdx}:${c}`, type, row: rIdx, col: c, isEF, isCD });
+          seatsByClass[cls].push({ key: `${rIdx}:${c}`, type, row: rIdx, col: c, isEF, isE, isCenter, isCD });
         }
       });
 
@@ -1219,18 +1281,34 @@
         let middleList = grouped.middle.slice();
         let all = seats.slice();
         let efList = [];
+        let eList = [];
+        let centerList = [];
         if (cls === "C") {
           const orderFn = buildZigzagOrder;
           windowList = orderFn(windowList);
           aisleList = orderFn(aisleList);
           middleList = orderFn(middleList);
           all = orderFn(all);
-          efList = orderFn(seats.filter((s) => s.isEF));
+          efList = orderFn(seats.filter((s) => s.isEF && (!isC232 || !s.isE) && (!isC222 || !s.isCenter)));
+          if (isC232) {
+            eList = orderFn(seats.filter((s) => s.isE));
+            windowList = windowList.filter((s) => !s.isE);
+            aisleList = aisleList.filter((s) => !s.isE);
+            middleList = middleList.filter((s) => !s.isE);
+            all = all.filter((s) => !s.isE);
+          }
+          if (isC222) {
+            centerList = orderFn(seats.filter((s) => s.isCenter));
+            windowList = windowList.filter((s) => !s.isCenter);
+            aisleList = aisleList.filter((s) => !s.isCenter);
+            middleList = middleList.filter((s) => !s.isCenter);
+            all = all.filter((s) => !s.isCenter);
+          }
         } else if (cls === "W") {
-          windowList = buildSpreadOrder(windowList);
-          aisleList = buildSpreadOrder(aisleList);
-          middleList = buildSpreadOrder(middleList);
-          all = buildSpreadOrder(all);
+          windowList = buildFrontBiasOrder(windowList);
+          aisleList = buildFrontBiasOrder(aisleList);
+          middleList = buildFrontBiasOrder(middleList);
+          all = buildFrontBiasOrder(all);
         } else if (cls === "F") {
           windowList = buildSpreadOrder(windowList);
           aisleList = buildSpreadOrder(aisleList);
@@ -1267,6 +1345,7 @@
               const seat = seatMap.get(`${rowKey}:${col}`);
               if (!seat) continue;
               if (cls === "F" && !seat.isCD) continue;
+              if (cls === "C" && isC232 && seat.isE) continue;
               eligible.push(col);
             }
             let idx = 0;
@@ -1325,6 +1404,8 @@
           }
           if (!seat && preferWindow) seat = pickFromList(windowList, used);
           if (!seat) seat = pickFromList(all, used);
+          if (!seat && centerList.length) seat = pickFromList(centerList, used);
+          if (!seat && eList.length) seat = pickFromList(eList, used);
           if (!seat) break;
           used.add(seat.key);
           occupied.add(seat.key);
@@ -1399,17 +1480,34 @@
       parseSeatmapWorkbook(wb);
     };
 
+        let autoSeatmapRetries = 0;
+
     const tryAutoLoadSeatmap = async () => {
-      if (!window.XLSX) return;
+      if (location.protocol === "file:") {
+        seatmapMeta.textContent = "Run a local server to load seatmap.xlsx";
+        return;
+      }
+      if (!window.XLSX) {
+        if (autoSeatmapRetries < 5) {
+          autoSeatmapRetries += 1;
+          setTimeout(tryAutoLoadSeatmap, 300);
+        } else {
+          seatmapMeta.textContent = "Seatmap loader unavailable";
+        }
+        return;
+      }
       if (Object.keys(seatmapByKey).length) return;
       try {
         const res = await fetch("seatmap.xlsx", { cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) {
+          seatmapMeta.textContent = "Seatmap not found: seatmap.xlsx";
+          return;
+        }
         const data = await res.arrayBuffer();
         const wb = XLSX.read(data, { type: "array" });
         parseSeatmapWorkbook(wb);
       } catch (e) {
-        // ignore
+        seatmapMeta.textContent = "Seatmap load failed";
       }
     };
 
@@ -1439,7 +1537,7 @@
     });
 
     aircraftSelect.addEventListener("change", renderLoad);
-    lightLoadChk.addEventListener("change", renderLoad);  // ✅ 체크 변경 시 즉시 반영
+    lightLoadChk.addEventListener("change", renderLoad);  // ??체크 변�???즉시 반영
     loadRefreshBtn.addEventListener("click", renderLoad);
     homeBtn.addEventListener("click", () => showScreen('main'));
 
@@ -1454,4 +1552,20 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
