@@ -402,6 +402,27 @@
       align-items:stretch;
     }
     .seatmapRow.gapRow{ height:14px; }
+    .seatmapRow.exitRow{ position:relative; }
+    .seatmapRow.exitRow::before,
+    .seatmapRow.exitRow::after{
+      content:"EXIT";
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:0.4px;
+      color:#c1121f;
+      background:#ffffff;
+      border:1px solid #c1121f;
+      border-radius:999px;
+      padding:2px 6px;
+      line-height:1;
+      white-space:nowrap;
+      pointer-events:none;
+    }
+    .seatmapRow.exitRow::before{ left:2px; }
+    .seatmapRow.exitRow::after{ right:2px; }
     .seatCell{
       width:100%;
       aspect-ratio:1 / 1;
@@ -912,6 +933,9 @@
 
       for (let r = range.s.r; r <= range.e.r; r++) {
         const rowCells = new Array(width).fill("");
+        const metaCell = sheet[XLSX.utils.encode_cell({ r, c: range.s.c })];
+        const metaVal = metaCell ? String(metaCell.v).trim() : "";
+        const isExit = /exit/i.test(metaVal);
         let firstCol = -1;
         let lastCol = -1;
         let rowClass = "";
@@ -935,7 +959,8 @@
           lastCol,
           className: rowClass,
           hasSeat,
-          yBlock: -1
+          yBlock: -1,
+          exit: isExit
         };
         rowsRaw.push(row);
 
@@ -969,7 +994,7 @@
         rowsRaw.length = Math.max(0, lastSeatRow - firstSeatRow + 1);
       }
       const normalizedRows = rowsRaw.map((row) => {
-        if (!row.hasSeat || !row.className) return { cells: [], cols: 0, hasSeat: false };
+        if (!row.hasSeat || !row.className) return { cells: [], cols: 0, hasSeat: false, exit: row.exit };
         let start = row.firstCol;
         let end = row.lastCol;
         if (row.className === "Y" && row.yBlock >= 0) {
@@ -984,7 +1009,7 @@
           }
         }
         const sliced = row.cellsFull.slice(start, end + 1);
-        return { cells: sliced, cols: sliced.length, hasSeat: true, offset: start };
+        return { cells: sliced, cols: sliced.length, hasSeat: true, offset: start, exit: row.exit };
       });
 
       const maxCols = normalizedRows.reduce((m, row) => Math.max(m, row.cols), 0);
@@ -1437,6 +1462,7 @@ const ADJACENT_PAIR_SHARE = 0.2;
         if (!row.hasSeat) {
           const gap = document.createElement("div");
           gap.className = "seatmapRow gapRow";
+          if (row.exit) gap.classList.add("exitRow");
           gap.style.setProperty("--row-cols", seatmap.maxCols || 1);
           gap.style.setProperty("--row-gap-x", `${BASE_GAP_X}px`);
           gap.style.setProperty("--row-gap-y", `${BASE_GAP_Y}px`);
@@ -1446,6 +1472,7 @@ const ADJACENT_PAIR_SHARE = 0.2;
         }
         const rowEl = document.createElement("div");
         rowEl.className = "seatmapRow";
+        if (row.exit) rowEl.classList.add("exitRow");
         const rowClass = row.cells.find((c) => c) || "";
         const isB777C = isB777 && rowClass === "C" && !isB777FourClass;
         rowEl.style.setProperty("--row-cols", row.cols);
