@@ -987,11 +987,24 @@
       let firstSeatRow = rowsRaw.findIndex((row) => row.hasSeat);
       let lastSeatRow = rowsRaw.length - 1;
       while (lastSeatRow >= 0 && !rowsRaw[lastSeatRow].hasSeat) lastSeatRow -= 1;
+
       if (firstSeatRow === -1) {
         rowsRaw.length = 0;
       } else {
-        rowsRaw.splice(0, firstSeatRow);
-        rowsRaw.length = Math.max(0, lastSeatRow - firstSeatRow + 1);
+        // Keep boundary EXIT marker rows that sit just outside the first/last seat rows.
+        // Many seatmaps encode EXIT as a standalone (no-seat) row right before/after the seating block.
+        let firstKeep = firstSeatRow;
+        while (firstKeep > 0 && !rowsRaw[firstKeep - 1].hasSeat && rowsRaw[firstKeep - 1].exit) {
+          firstKeep -= 1;
+        }
+
+        let lastKeep = lastSeatRow;
+        while (lastKeep < rowsRaw.length - 1 && !rowsRaw[lastKeep + 1].hasSeat && rowsRaw[lastKeep + 1].exit) {
+          lastKeep += 1;
+        }
+
+        rowsRaw.splice(0, firstKeep);
+        rowsRaw.length = Math.max(0, lastKeep - firstKeep + 1);
       }
       const normalizedRows = rowsRaw.map((row) => {
         if (!row.hasSeat || !row.className) return { cells: [], cols: 0, hasSeat: false, exit: row.exit };
