@@ -1146,15 +1146,6 @@ const ADJACENT_PAIR_SHARE = 0.2;
       return null;
     };
 
-    const pickFromSide = (leftList, rightList, biasSide, biasShare, used) => {
-      const primary = biasSide == "L" ? leftList : rightList;
-      const secondary = biasSide == "L" ? rightList : leftList;
-      if (Math.random() < biasShare) {
-        return pickFromList(primary, used) || pickFromList(secondary, used);
-      }
-      return pickFromList(secondary, used) || pickFromList(primary, used);
-    };
-
     const buildRowOrder = (rowKeys) => {
       if (rowKeys.length <= 1) return rowKeys.slice();
       const sorted = rowKeys.slice().sort((a, b) => a - b);
@@ -1356,7 +1347,6 @@ const ADJACENT_PAIR_SHARE = 0.2;
         if (!seatCols.length) return;
         const firstSeat = seatCols[0];
         const lastSeat = seatCols[seatCols.length - 1];
-        const midSeat = (firstSeat + lastSeat) / 2;
         for (let idx = 0; idx < seatCols.length; idx++) {
           const c = seatCols[idx];
           const cls = rowCells[c];
@@ -1372,8 +1362,7 @@ const ADJACENT_PAIR_SHARE = 0.2;
           let type = "middle";
           if (!hasSeatLeft || !hasSeatRight) type = "window";
           else if ((leftEmpty && hasSeatLeft) || (rightEmpty && hasSeatRight)) type = "aisle";
-          const side = c <= midSeat ? "L" : "R";
-          seatsByClass[cls].push({ key: `${rIdx}:${c}`, type, row: rIdx, col: c, side, isEF, isE, isCenter, isCD });
+          seatsByClass[cls].push({ key: `${rIdx}:${c}`, type, row: rIdx, col: c, isEF, isE, isCenter, isCD });
         }
       });
 
@@ -1441,24 +1430,6 @@ const ADJACENT_PAIR_SHARE = 0.2;
           if (eList.length) eList = interleaveRows(eList, rowBias);
           if (centerList.length) centerList = interleaveRows(centerList, rowBias);
         }
-        let c121BiasSide = null;
-        let c121BiasShare = 0;
-        let windowLeft = [];
-        let windowRight = [];
-        let aisleLeft = [];
-        let aisleRight = [];
-        let allLeft = [];
-        let allRight = [];
-        if (cls === "C" && isC121) {
-          c121BiasSide = Math.random() < 0.5 ? "L" : "R";
-          c121BiasShare = classLoadRatio < 0.55 ? 0.75 : 0.6;
-          windowLeft = windowList.filter((s) => s.side === "L");
-          windowRight = windowList.filter((s) => s.side === "R");
-          aisleLeft = aisleList.filter((s) => s.side === "L");
-          aisleRight = aisleList.filter((s) => s.side === "R");
-          allLeft = all.filter((s) => s.side === "L");
-          allRight = all.filter((s) => s.side === "R");
-        }
         const preferWindow = cls === "C"
           && isC121
           && classLoadRatio > 0
@@ -1514,28 +1485,22 @@ const ADJACENT_PAIR_SHARE = 0.2;
         while (remaining > 0) {
           let seat = null;
           if (preferWindow && Math.random() < C121_WINDOW_SHARE) {
-            if (isC121) {
-              seat = pickFromSide(windowLeft, windowRight, c121BiasSide, c121BiasShare, used)
-                || pickFromSide(aisleLeft, aisleRight, c121BiasSide, c121BiasShare, used)
-                || pickFromList(middleList, used);
-            } else {
-              seat = pickFromList(windowList, used)
-                || pickFromList(efList, used)
-                || pickFromList(aisleList, used)
-                || pickFromList(middleList, used);
-            }
+            seat = pickFromList(windowList, used)
+              || pickFromList(efList, used)
+              || pickFromList(aisleList, used)
+              || pickFromList(middleList, used);
           } else if (Math.random() < PREF_PROB) {
             if (cls === "C") {
               const efShare = preferWindow ? C121_EF_SHARE : C_EF_SHARE;
               if (Math.random() < efShare) {
                 seat = pickFromList(efList, used)
-                  || (isC121 ? pickFromSide(windowLeft, windowRight, c121BiasSide, c121BiasShare, used) : pickFromList(windowList, used))
-                  || (isC121 ? pickFromSide(aisleLeft, aisleRight, c121BiasSide, c121BiasShare, used) : pickFromList(aisleList, used))
+                  || pickFromList(windowList, used)
+                  || pickFromList(aisleList, used)
                   || pickFromList(middleList, used);
               } else {
-                seat = (isC121 ? pickFromSide(windowLeft, windowRight, c121BiasSide, c121BiasShare, used) : pickFromList(windowList, used))
+                seat = pickFromList(windowList, used)
                   || pickFromList(efList, used)
-                  || (isC121 ? pickFromSide(aisleLeft, aisleRight, c121BiasSide, c121BiasShare, used) : pickFromList(aisleList, used))
+                  || pickFromList(aisleList, used)
                   || pickFromList(middleList, used);
               }
             } else {
@@ -1544,16 +1509,8 @@ const ADJACENT_PAIR_SHARE = 0.2;
                 || pickFromList(middleList, used);
             }
           }
-          if (!seat && preferWindow) {
-            seat = isC121
-              ? pickFromSide(windowLeft, windowRight, c121BiasSide, c121BiasShare, used)
-              : pickFromList(windowList, used);
-          }
-          if (!seat) {
-            seat = isC121
-              ? pickFromSide(allLeft, allRight, c121BiasSide, c121BiasShare, used)
-              : pickFromList(all, used);
-          }
+          if (!seat && preferWindow) seat = pickFromList(windowList, used);
+          if (!seat) seat = pickFromList(all, used);
           if (!seat && centerList.length) seat = pickFromList(centerList, used);
           if (!seat && eList.length) seat = pickFromList(eList, used);
           if (!seat) break;
