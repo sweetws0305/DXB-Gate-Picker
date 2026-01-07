@@ -1133,6 +1133,7 @@
     const C121_WINDOW_SHARE = 0.7;
     const W_FRONT_SHARE = 0.7;
     const W_FRONT_SLICE = 0.45;
+    const LOW_DENSITY_SCATTER = 0.6;
 const ADJACENT_PAIR_SHARE = 0.2;
     const B777_C_GAP_X = 10;
     const B777_C_GAP_Y = 4;
@@ -1245,6 +1246,37 @@ const ADJACENT_PAIR_SHARE = 0.2;
       ordered.reverse();
       return ordered;
     };
+
+    const interleaveRows = (list) => {
+      if (list.length <= 2) return list.slice();
+      const popOrder = list.slice().reverse();
+      const byRow = new Map();
+      const rowOrder = [];
+      for (const seat of popOrder) {
+        if (!byRow.has(seat.row)) {
+          byRow.set(seat.row, []);
+          rowOrder.push(seat.row);
+        }
+        byRow.get(seat.row).push(seat);
+      }
+      for (const rowSeats of byRow.values()) {
+        shuffle(rowSeats);
+      }
+      const interleaved = [];
+      let added = true;
+      while (added) {
+        added = false;
+        for (const rowKey of rowOrder) {
+          const rowSeats = byRow.get(rowKey);
+          if (rowSeats && rowSeats.length) {
+            interleaved.push(rowSeats.pop());
+            added = true;
+          }
+        }
+      }
+      return interleaved.reverse();
+    };
+
 
     const buildOccupancy = (seatmap, loads) => {
       const seatsByClass = { F: [], C: [], W: [], Y: [] };
@@ -1361,6 +1393,16 @@ const ADJACENT_PAIR_SHARE = 0.2;
 
         let remaining = Math.min(loads[cls] || 0, seats.length);
         const classLoadRatio = seats.length ? (remaining / seats.length) : 0;
+        const scatterLowDensity = classLoadRatio > 0 && classLoadRatio < LOW_DENSITY_SCATTER;
+        if (scatterLowDensity) {
+          windowList = interleaveRows(windowList);
+          aisleList = interleaveRows(aisleList);
+          middleList = interleaveRows(middleList);
+          all = interleaveRows(all);
+          if (efList.length) efList = interleaveRows(efList);
+          if (eList.length) eList = interleaveRows(eList);
+          if (centerList.length) centerList = interleaveRows(centerList);
+        }
         const preferWindow = cls === "C"
           && isC121
           && classLoadRatio > 0
