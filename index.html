@@ -1247,32 +1247,58 @@ const ADJACENT_PAIR_SHARE = 0.2;
       return ordered;
     };
 
-    const interleaveRows = (list) => {
+    const interleaveRows = (list, rowBias = 0) => {
       if (list.length <= 2) return list.slice();
       const popOrder = list.slice().reverse();
       const byRow = new Map();
-      const rowOrder = [];
-      for (const seat of popOrder) {
+      const rowRank = new Map();
+      for (let i = 0; i < popOrder.length; i++) {
+        const seat = popOrder[i];
         if (!byRow.has(seat.row)) {
           byRow.set(seat.row, []);
-          rowOrder.push(seat.row);
+          rowRank.set(seat.row, i);
         }
         byRow.get(seat.row).push(seat);
       }
       for (const rowSeats of byRow.values()) {
         shuffle(rowSeats);
       }
-      const interleaved = [];
-      let added = true;
-      while (added) {
-        added = false;
-        for (const rowKey of rowOrder) {
-          const rowSeats = byRow.get(rowKey);
-          if (rowSeats && rowSeats.length) {
-            interleaved.push(rowSeats.pop());
-            added = true;
-          }
+      let activeRows = Array.from(byRow.keys());
+      const maxRank = Math.max(...Array.from(rowRank.values()));
+      const weightFor = (row) => {
+        if (!rowBias) return 1;
+        const rank = rowRank.get(row) || 0;
+        const normalized = maxRank > 0 ? (1 - (rank / maxRank)) : 1;
+        return (1 - rowBias) + rowBias * normalized;
+      };
+      const pickRow = (rows) => {
+        let total = 0;
+        for (const row of rows) total += weightFor(row);
+        let roll = Math.random() * total;
+        for (const row of rows) {
+          roll -= weightFor(row);
+          if (roll <= 0) return row;
         }
+        return rows[rows.length - 1];
+      };
+      const interleaved = [];
+      let lastRow = null;
+      while (activeRows.length) {
+        let candidates = activeRows;
+        if (lastRow !== null && activeRows.length > 1) {
+          candidates = activeRows.filter((row) => row !== lastRow);
+        }
+        const rowKey = pickRow(candidates);
+        const rowSeats = byRow.get(rowKey);
+        if (rowSeats && rowSeats.length) {
+          interleaved.push(rowSeats.pop());
+          if (!rowSeats.length) {
+            activeRows = activeRows.filter((row) => row !== rowKey);
+          }
+        } else {
+          activeRows = activeRows.filter((row) => row !== rowKey);
+        }
+        lastRow = rowKey;
       }
       return interleaved.reverse();
     };
@@ -1395,13 +1421,14 @@ const ADJACENT_PAIR_SHARE = 0.2;
         const classLoadRatio = seats.length ? (remaining / seats.length) : 0;
         const scatterLowDensity = classLoadRatio > 0 && classLoadRatio < LOW_DENSITY_SCATTER;
         if (scatterLowDensity) {
-          windowList = interleaveRows(windowList);
-          aisleList = interleaveRows(aisleList);
-          middleList = interleaveRows(middleList);
-          all = interleaveRows(all);
-          if (efList.length) efList = interleaveRows(efList);
-          if (eList.length) eList = interleaveRows(eList);
-          if (centerList.length) centerList = interleaveRows(centerList);
+          const rowBias = cls === "W" ? 0.6 : (cls === "F" ? 0.35 : (cls === "C" ? 0.25 : 0.15));
+          windowList = interleaveRows(windowList, rowBias);
+          aisleList = interleaveRows(aisleList, rowBias);
+          middleList = interleaveRows(middleList, rowBias);
+          all = interleaveRows(all, rowBias);
+          if (efList.length) efList = interleaveRows(efList, rowBias);
+          if (eList.length) eList = interleaveRows(eList, rowBias);
+          if (centerList.length) centerList = interleaveRows(centerList, rowBias);
         }
         const preferWindow = cls === "C"
           && isC121
