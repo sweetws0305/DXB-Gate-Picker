@@ -1188,11 +1188,15 @@ const ADJACENT_PAIR_SHARE = 0.2;
       let seat = null;
       while (list.length) {
         const cand = list.pop();
+        if (used.has(cand.key)) continue;
         if (!cand.mirrorKey || !used.has(cand.mirrorKey) || Math.random() >= avoidRate) {
           seat = cand;
           break;
         }
         stash.push(cand);
+      }
+      if (!seat && stash.length) {
+        seat = stash.pop();
       }
       while (stash.length) list.push(stash.pop());
       return seat;
@@ -1474,7 +1478,8 @@ const ADJACENT_PAIR_SHARE = 0.2;
           shuffle(all);
         }
 
-        let remaining = Math.min(loads[cls] || 0, seats.length);
+        const targetCount = Math.min(loads[cls] || 0, seats.length);
+        let remaining = targetCount;
         const classLoadRatio = seats.length ? (remaining / seats.length) : 0;
         if (cls === "C" && classLoadRatio > 0 && classLoadRatio < C_FRONT_LOAD) {
           windowList = buildFrontBiasOrder(windowList, C_FRONT_SHARE, C_FRONT_SLICE);
@@ -1666,13 +1671,23 @@ const ADJACENT_PAIR_SHARE = 0.2;
           occupied.add(seat.key);
           remaining -= 1;
         }
-        if (remaining > 0) {
+        if (used.size < targetCount) {
           const fallback = seats.filter((s) => !used.has(s.key));
           shuffle(fallback);
-          for (let i = 0; i < remaining && i < fallback.length; i++) {
+          const need = targetCount - used.size;
+          for (let i = 0; i < need && i < fallback.length; i++) {
             const seat = fallback[i];
             used.add(seat.key);
             occupied.add(seat.key);
+          }
+        } else if (used.size > targetCount) {
+          const over = Array.from(used);
+          shuffle(over);
+          const drop = used.size - targetCount;
+          for (let i = 0; i < drop && i < over.length; i++) {
+            const key = over[i];
+            used.delete(key);
+            occupied.delete(key);
           }
         }
       }
