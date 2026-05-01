@@ -756,11 +756,11 @@
     const aircraftData = [
       { name: "A350 Mid Range", classes: { C: 32, W: 21, Y: 259 } },
       { name: "A350 Ultra Long Range", classes: { C: 32, W: 21, Y: 238 } },
-      { name: "A380 Two Class", classes: { C: 58, Y: 557 } },
+      { name: "A380 Three Class High Density", classes: { C: 76, W: 56, Y: 437 } },
       { name: "A380 Three Class Mid Range", classes: { F: 14, C: 76, Y: [427, 429] } },
       { name: "A380 Three Class Ultra Long Range", classes: { F: 14, C: 76, Y: [399, 401] } },
       { name: "A380 Four Class", classes: { F: 14, C: 76, W: 56, Y: [322, 338, 341] } },
-      { name: "B777-200LR", classes: { C: 38, Y: 264 } },
+      { name: "B777-200LR", classes: { C: 38, W: 24, Y: 214 } },
       { name: "B777-300ER Two Class", classes: { C: 35, Y: 386 } },
       { name: "B777-300ER Three Class", classes: { F: 8, C: 42, Y: [304, 310] } },
       { name: "B777-300ER Four Class", classes: { F: 8, C: 40, W: 24, Y: [256, 260] } },
@@ -1122,20 +1122,19 @@
         ensureAircraftBase(info.baseName, seatmap);
       }
       for (const [baseName, variants] of Object.entries(seatmapGroups)) {
-        const yVals = Array.from(new Set(
-          variants
-            .map((v) => v.yTagNumber ?? v.counts.Y)
-            .filter((v) => Number.isFinite(v))
-        )).sort((a, b) => a - b);
-        if (yVals.length > 0) {
-          const idx = aircraftData.findIndex((a) => a.name === baseName);
-          if (idx >= 0) {
-            aircraftData[idx].classes = {
-              ...aircraftData[idx].classes,
-              Y: yVals.length > 1 ? yVals : yVals[0]
-            };
-          }
+        const idx = aircraftData.findIndex((a) => a.name === baseName);
+        if (idx < 0) continue;
+
+        const classes = {};
+        for (const cls of classOrder) {
+          const vals = Array.from(new Set(
+            variants
+              .map((v) => cls === "Y" ? (v.yTagNumber ?? v.counts.Y) : v.counts[cls])
+              .filter((v) => Number.isFinite(v) && v > 0)
+          )).sort((a, b) => a - b);
+          if (vals.length > 0) classes[cls] = vals.length > 1 ? vals : vals[0];
         }
+        if (Object.keys(classes).length > 0) aircraftData[idx].classes = classes;
       }
       const count = Object.keys(seatmapByKey).length;
       if (count === 0) {
